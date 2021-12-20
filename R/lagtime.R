@@ -6,7 +6,7 @@
 #' If no unit is provided, \code{hl} is assumed to be in [m].
 #' @param uc streamflow velocity. If no unit is provided, \code{uc} is assumed to be in [m/s].
 #' @param method integer describing the method to use for lag time estimation. Possible values: 1 (see details).
-#' @param verbose boolean indicating if information messages should be written to the console
+#' @param verbose boolean indicating if information messages should be written to the console.
 #' @param ... further arguments passed to or from other methods
 #' @return A numeric value of class units, or if \code{hl} is a transfR object,
 #' the same transfR object incremented by the "lagtime" attribute.

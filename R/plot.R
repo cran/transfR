@@ -7,12 +7,15 @@
 #' @param attribute attribute of the transfR object to plot
 #' @param format format for labels of time series on x axis
 #' @param at a date-time or date object for ticks on x axis
+#' @param nticks number of ticks on x axis
 #' @param main a main title for the plot, see also \link[graphics]{title}
 #' @param xlab a label for the x axis, defaults to a description of x
 #' @param ylab a label for the y axis, defaults to a description of y
 #' @param type 1-character string giving the type of plot desired (for details,
 #' see \link[graphics]{plot})
 #' @param lwd the line width (for details, see \link[graphics]{par})
+#' @param las the style of axis labels (for details, see \link[graphics]{par})
+#' @param cex.names expansion factor for axis names (for details, see \link[graphics]{barplot})
 #' @param col a specification for the default plotting color (for details, see \link[graphics]{par})
 #' @param keeplocal boolean to preserve local graphical parameters
 #' @param ... further specifications, see \link[graphics]{plot}
@@ -31,8 +34,11 @@ plot.transfR <- function(x, y, i, attribute,
                          ylab,
                          format,
                          at,
+                         nticks = 5,
                          type = "l",
                          lwd = 2,
+                         las = 1,
+                         cex.names = 1,
                          col = c("#045a8d","#fb8072","#bebada","#ffffb3","#8dd3c7"),
                          keeplocal = TRUE,
                          ...){
@@ -86,18 +92,22 @@ plot.transfR <- function(x, y, i, attribute,
                                 col = col[which(att==attribute)], lwd = lwd)
     if(missing(at)) at <- seq(from = min(st_get_dimension_values(st,1)),
                                   to = max(st_get_dimension_values(st,1)),
-                                  length = 5)
+                                  length = nticks)
     axis.POSIXct(side = 1, x = st_get_dimension_values(st,1), format = format, at = at)
     legend("topright", legend = c(attribute), col = col, lty = 1, lwd = lwd, bty = "n")
   }
   if(all(attribute %in% "uh")){
     uh <- x$uh[[i]]
     if(missing(main)) main <- paste("Unit hydrograph of catchment",i)
-    if(missing(xlab)) xlab <- "Travel~time~to~the~outlet"
+    if(missing(xlab)) xlab <- "Travel time to the outlet [h]"
     if(missing(ylab)) ylab <- "Probability"
-    plot(x = units::set_units((1:length(uh))*x$deltat,"h"), y = uh,
-         ylab = ylab, xlab = xlab, main = main,
-         type = type, lwd = lwd, col = col, bty = "n")
-    grid()
+    if(length(uh)>10){
+      if(missing(las)) las <- 2
+      if(missing(cex.names)) cex.names <- 0.75
+    }
+    tt_class <- paste0(units::set_units((1:length(uh)-1)*x$deltat,"h"),"-",units::set_units((1:length(uh))*x$deltat,"h"))
+    barplot(height = matrix(uh,nrow = 1), space = 0, names.arg = tt_class,
+            ylab = ylab, xlab = xlab, main = main, col = "#045a8d", border = "gray",
+            las = las, cex.names = cex.names, ...)
   }
 }

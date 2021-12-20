@@ -26,6 +26,7 @@ inversion(Qobs, ...)
   cooldown = 8,
   dosplit = TRUE,
   split = 30,
+  fixedpar = TRUE,
   parallel = FALSE,
   cores = NULL,
   ...
@@ -74,6 +75,9 @@ subperiods of length defined by \code{split}}
 \item{split}{length the subperiods if dosplit is true. If no unit is provided, \code{split} is assumed to be
 in [days]}
 
+\item{fixedpar}{boolean, if false Ap and Ad are calibrated dynamically according to the coefficient of variation of
+RnAp and Qobs respectively (see details)}
+
 \item{parallel}{boolean, if true the splitting of the inversion
 by subperiods is parallelised}
 
@@ -96,7 +100,9 @@ net rainfall by inversion \insertCite{Tarantola1982,Menke1989,Boudhraa2018}{tran
 a priori on this net rainfall (that could be estimated by the function \link{rapriori}), a description
 of the errors on the discharge (\code{Ad}, \code{Bd}, \code{Dd}) and on the net rainfall (\code{Ap},
 \code{Bp}, \code{Tp}) that are assumed to be Gaussian and unbiased. Default values of these parameters
-are taken from \insertCite{deLavenne2016;textual}{transfR}.
+are taken from \insertCite{deLavenne2016;textual}{transfR}. If \code{fixedpar} is deactivated, \code{Ap}
+is estimated at 20% of the coefficient of variation of RnAp, and \code{Ad} estimated at 5% of the coefficient
+of variation of Qobs.
 
 It is recommanded to use \code{warmup} and \code{cooldown} periods in order to reduce the problem of oscillations
 created by inversion.

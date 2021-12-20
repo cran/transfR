@@ -126,7 +126,13 @@ mixr <- function(obs, sim, mdist, distance = "rghosh", gres = 5, weightO = 0.8, 
             dim(sim$st[[paste0("Wdonor",idonor)]]) <- dim(sim$st)}
           sim$st[[paste0("Idonor",idonor)]][,i]  <- apply(weights,MARGIN = 1, FUN = function(x){if(all(is.na(x))){NA}else{which(rank(1-x,ties.method = "first")==idonor)}})
           sim$st[[paste0("Wdonor",idonor)]][,i] <- apply(weights,MARGIN = 1, FUN = function(x){if(all(is.na(x))){NA}else{x[which(rank(1-x,ties.method = "first")==idonor)]}})
-          for(t in 1:dim(sim$st)[1]) sim$st[[paste0("RnDonor",idonor)]][t,i] <- RnInv[t,sim$st[[paste0("Idonor",idonor)]][t,i]]
+          #Solution 1 (simpler)
+          # for(t in 1:dim(sim$st)[1]) sim$st[[paste0("RnDonor",idonor)]][t,i] <- RnInv[t,sim$st[[paste0("Idonor",idonor)]][t,i]]
+          #Solution 2 (faster)
+          iweights <- matrix(0, nrow = dim(sim$st)[1], ncol = min(c(ndonors,length(idonors))))
+          iweights <- cbind(iweights,sim$st[[paste0("Idonor",idonor)]][,i])
+          iweights <- t(apply(iweights, MARGIN = 1, function(x){if(!is.na(x[length(x)])){x[x[length(x)]]=1;x[1:(length(x)-1)]}else{rep(NA,length(x)-1)}}))
+          sim$st[[paste0("RnDonor",idonor)]][,i] <- apply(RnInv*iweights,MARGIN = 1,FUN = function(x){if(all(is.na(x))){NA}else{sum(x, na.rm = T)}})
           # units(sim$st[[which(names(sim$st)==paste0("RnDonor",idonor))]]) <- units(RnInv) # could not find a way to keep the units provided by weighting
           units(sim$st[[paste0("RnDonor",idonor)]]) <- units(RnInv) # could not find a way to keep the units provided by weighting
         }

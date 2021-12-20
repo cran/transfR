@@ -27,6 +27,8 @@
 #' subperiods of length defined by \code{split}
 #' @param split length the subperiods if dosplit is true. If no unit is provided, \code{split} is assumed to be
 #' in [days]
+#' @param fixedpar boolean, if false Ap and Ad are calibrated dynamically according to the coefficient of variation of
+#' RnAp and Qobs respectively (see details)
 #' @param parallel boolean, if true the splitting of the inversion
 #' by subperiods is parallelised
 #' @param cores the number of cores to use for parallel execution if \code{parallel} is TRUE. If not specified, the number of cores is set to the value of \code{parallel::detectCores()}
@@ -43,7 +45,9 @@
 #' a priori on this net rainfall (that could be estimated by the function \link{rapriori}), a description
 #' of the errors on the discharge (\code{Ad}, \code{Bd}, \code{Dd}) and on the net rainfall (\code{Ap},
 #' \code{Bp}, \code{Tp}) that are assumed to be Gaussian and unbiased. Default values of these parameters
-#' are taken from \insertCite{deLavenne2016;textual}{transfR}.
+#' are taken from \insertCite{deLavenne2016;textual}{transfR}. If \code{fixedpar} is deactivated, \code{Ap}
+#' is estimated at 20% of the coefficient of variation of RnAp, and \code{Ad} estimated at 5% of the coefficient
+#' of variation of Qobs.
 #'
 #' It is recommanded to use \code{warmup} and \code{cooldown} periods in order to reduce the problem of oscillations
 #' created by inversion.
@@ -91,11 +95,13 @@ inversion.default <- function(Qobs, uh, RnAp, deltat, ...){
 #' @export
 inversion.units <- function(Qobs, uh, RnAp, deltat, Bd = 0.01, Dd = 1, Bp = 0.001, Tp = 20, Ad = 0.01,
                             Ap = 0.9, warmup = 10, cooldown = 8, dosplit = TRUE, split = 30,
-                            parallel = FALSE, cores = NULL, ...){
+                            fixedpar = TRUE, parallel = FALSE, cores = NULL, ...){
 
-  #--- Other default parameter values
-  if(missing(Ad)) Ad <- units::drop_units(stats::sd(Qobs,na.rm = T)/mean(Qobs,na.rm = T)*0.05)
-  if(missing(Ap)) Ap <- units::drop_units(stats::sd(RnAp,na.rm = T)/mean(RnAp,na.rm = T)*0.2)
+  #--- Define some parameter values according to inputs characteristics
+  if(!fixedpar){
+    if(missing(Ad)) Ad <- units::drop_units(stats::sd(Qobs,na.rm = T)/mean(Qobs,na.rm = T)*0.05)
+    if(missing(Ap)) Ap <- units::drop_units(stats::sd(RnAp,na.rm = T)/mean(RnAp,na.rm = T)*0.2)
+  }
 
   #--- Inversion parameters
   Ad <- units::set_units(Ad,1)
@@ -134,7 +140,7 @@ inversion.units <- function(Qobs, uh, RnAp, deltat, Bd = 0.01, Dd = 1, Bp = 0.00
   for(i in 1:(length(bna)-1)) period[i+1] <- period[i]+abs(bna[i]-bna[i+1])
   if(max(period)>2){
     Rn <- NA
-    for(p in unique(period[bna])) Rn[period==p] <- inversion.units(Qobs = Qobs[period==p], uh = uh, RnAp = RnAp[period==p], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit=dosplit, split = split, parallel = parallel)
+    for(p in unique(period[bna])) Rn[period==p] <- inversion.units(Qobs = Qobs[period==p], uh = uh, RnAp = RnAp[period==p], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit=dosplit, split = split, fixedpar = TRUE, parallel = parallel)
     return(Rn)
   }
 
@@ -171,12 +177,12 @@ inversion.units <- function(Qobs, uh, RnAp, deltat, Bd = 0.01, Dd = 1, Bp = 0.00
       doParallel::registerDoParallel(cl=cl)
       on.exit(parallel::stopCluster(cl))
       tmp <- foreach::"%dopar%"(foreach::foreach(i = 1:length(cuts_start), .combine='c'),
-                                na.omit(inversion.units(Qobs = Q[cuts_start[i]:cuts_end[i]], uh = uh, RnAp = R[cuts_start[i]:cuts_end[i]], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit=FALSE, split = split, parallel = FALSE)))
+                                na.omit(inversion.units(Qobs = Q[cuts_start[i]:cuts_end[i]], uh = uh, RnAp = R[cuts_start[i]:cuts_end[i]], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit=FALSE, split = split, fixedpar = TRUE, parallel = FALSE)))
       Rn <- c(rep(NRn,npdt_warmup),tmp,rep(NRn,npdt_cooldown))
     }else{
       Rn <- rep(NRn,length(Q))
       for(i in 1:length(cuts_start)){
-        tmp <- inversion.units(Qobs = Q[cuts_start[i]:cuts_end[i]], uh = uh, RnAp = R[cuts_start[i]:cuts_end[i]], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit=FALSE, split = split, parallel = FALSE)
+        tmp <- inversion.units(Qobs = Q[cuts_start[i]:cuts_end[i]], uh = uh, RnAp = R[cuts_start[i]:cuts_end[i]], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit=FALSE, split = split, fixedpar = TRUE, parallel = FALSE)
         Rn[cuts_start[i]:cuts_end[i]][!is.na(tmp)] <- tmp[!is.na(tmp)]
       }
     }

@@ -79,17 +79,16 @@ hdist.sfc <- function(x, y, method="rghosh", gres=5, ditself=FALSE, maxsample=2.
     }
     if(verbose) cat("Computing Ghosh distance between catchments\n")
     if(parallel){
-      if(missing(cores)) cores=parallel::detectCores()
+      if(missing(cores)|is.null(cores)) cores=parallel::detectCores()
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl=cl)
       on.exit(parallel::stopCluster(cl))
       if(!identical(x,y)){
-        # res <- foreach::foreach(i=1:length(x),.packages="sf")%dopar%{sapply(ydisc,FUN=function(x){mean(st_distance(x,xdisc[[i]]))})}
         res <- foreach::"%dopar%"(foreach::foreach(i=1:length(x),.packages="sf"),
                                   sapply(ydisc,FUN=function(x){.Fortran("gdist",coord1=st_coordinates(x),coord2=st_coordinates(xdisc[[i]]),n1=length(x),n2=length(xdisc[[i]]),proj=proj,rescale=FALSE,diag=FALSE,mdist=0)$mdist}))
         gdist <- matrix(unlist(res), nrow = length(x), ncol = length(y), byrow = TRUE)
       }else{
-        foreach::"%dopar%"(res <- foreach::foreach(i=1:length(x),.packages="sf"),{
+        res <- foreach::"%dopar%"(foreach::foreach(i=1:length(x),.packages="sf"),{
           tmp <- sapply(ydisc[i:length(x)],FUN=function(x){.Fortran("gdist",coord1=st_coordinates(x),coord2=st_coordinates(xdisc[[i]]),n1=length(x),n2=length(xdisc[[i]]),proj=proj,rescale=FALSE,diag=FALSE,mdist=0)$mdist})
           c(rep(NA,i-1),tmp)
         })

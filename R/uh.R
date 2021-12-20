@@ -20,8 +20,8 @@
 #' data(Oudon)
 #' uh1 <- uh(hl=Oudon$hl[[1]], uc=units::set_units(0.5,"m/s"),
 #' deltat=units::set_units(1,"h"))
-#' plot(units::set_units(uh1$time,"h"), cumsum(uh1$prob), type = "b",
-#' xlab = "Travel~time", ylab = "Cumulative~distribution")
+#' plot(units::set_units(uh1$max_time,"h"), cumsum(uh1$prob), type = "b",
+#' xlab = "Travel~time", ylab = "Probability~of~non-exceedance")
 #'
 #' object <- as_transfr(st=Oudon$obs,hl=Oudon$hl)
 #' object <- velocity(object)
@@ -50,7 +50,11 @@ uh.units = function(hl, uc, deltat, ...){
   lim_class_dist <- uc * lim_class_time
   uh <- hist(units::drop_units(units::set_units(time_to_outlet,"min")), breaks = units::drop_units(units::set_units(lim_class_time,"min")), plot = FALSE)
   wf <- hist(units::drop_units(units::set_units(hl,"m")), breaks = units::drop_units(units::set_units(lim_class_dist,"m")), plot = FALSE)
-  fdp <- data.frame("dist" = units::set_units(wf$mids,"m"), "time" = units::set_units(uh$breaks[-1],"min"), "prob" = units::set_units(diff(uh$breaks) * uh$density,1))
+  fdp <- data.frame("min_dist" = units::set_units(wf$breaks[1:nb_classes],"m"),
+                    "max_dist" = units::set_units(wf$breaks[1:nb_classes+1],"m"),
+                    "min_time" = units::set_units(uh$breaks[1:nb_classes],"min"),
+                    "max_time" = units::set_units(uh$breaks[1:nb_classes+1],"min"),
+                    "prob" = units::set_units(diff(uh$breaks) * uh$density,1))
   return(fdp)
 }
 

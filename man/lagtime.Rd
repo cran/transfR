@@ -28,7 +28,7 @@ If no unit is provided, \code{hl} is assumed to be in [m].}
 
 \item{method}{integer describing the method to use for lag time estimation. Possible values: 1 (see details).}
 
-\item{verbose}{boolean indicating if information messages should be written to the console}
+\item{verbose}{boolean indicating if information messages should be written to the console.}
 }
 \value{
 A numeric value of class units, or if \code{hl} is a transfR object,

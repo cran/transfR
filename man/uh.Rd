@@ -48,8 +48,8 @@ given at each time step (\code{deltat}).
 data(Oudon)
 uh1 <- uh(hl=Oudon$hl[[1]], uc=units::set_units(0.5,"m/s"),
 deltat=units::set_units(1,"h"))
-plot(units::set_units(uh1$time,"h"), cumsum(uh1$prob), type = "b",
-xlab = "Travel~time", ylab = "Cumulative~distribution")
+plot(units::set_units(uh1$max_time,"h"), cumsum(uh1$prob), type = "b",
+xlab = "Travel~time", ylab = "Probability~of~non-exceedance")
 
 object <- as_transfr(st=Oudon$obs,hl=Oudon$hl)
 object <- velocity(object)

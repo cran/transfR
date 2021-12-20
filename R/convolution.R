@@ -58,7 +58,7 @@ convolution.transfR = function(Rn, Rcol="RnSim", Qcol="Qsim", save_donor=FALSE, 
   dim(object$st[[Qcol]]) <- dim(object$st)
   for(i in 1:dim(object$st)[2]){
     if(verbose) progress("Computing simulated discharge for catchment ",i,dim(object$st)[2])
-    Qsim <- convolution(Rn=object$st[[Rcol]][,i],uh=object$uh[[i]],continuous=TRUE, ...)
+    Qsim <- convolution(Rn=object$st[[Rcol]][,i],uh=object$uh[[i]],continuous=TRUE)
     Qsim <- Qsim*st_area(st_geometry(object$st)[i])
     Qsim <- units::set_units(Qsim,"m^3/s")
     object$st[[Qcol]][,i] <- Qsim
@@ -66,9 +66,11 @@ convolution.transfR = function(Rn, Rcol="RnSim", Qcol="Qsim", save_donor=FALSE, 
   if(save_donor){
     iRcol <- grep("RnDonor",names(object$st))
     if(length(iRcol)==0) stop("save_donor is TRUE but no 'RnDonor' attributes found. Use also save_donor=TRUE when using mixr() function to keep memory of donor's Rn.")
+    if(verbose) cat("\n")
     for(i in iRcol){
-      if(verbose) progress("Additional discharge simulation using the single donor ",which(i==iRcol),length(iRcol),":")
-      object <- convolution(Rn = object, Rcol = names(object$st)[i], Qcol = gsub("RnDonor","QsimDonor",names(object$st)[i]), continuous = TRUE, save_donor = FALSE, ...)
+      if(verbose) progress("Additional discharge simulation using the single donor ",which(i==iRcol),length(iRcol),"")
+      object <- convolution(Rn = object, Rcol = names(object$st)[i], Qcol = gsub("RnDonor","QsimDonor",names(object$st)[i]),
+                            continuous = TRUE, save_donor = FALSE, verbose = FALSE, ...)
     }
     #Re-order columns just for readability of numerous attributes
     n <- names(object$st)

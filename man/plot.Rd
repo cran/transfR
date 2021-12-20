@@ -15,8 +15,11 @@
   ylab,
   format,
   at,
+  nticks = 5,
   type = "l",
   lwd = 2,
+  las = 1,
+  cex.names = 1,
   col = c("#045a8d", "#fb8072", "#bebada", "#ffffb3", "#8dd3c7"),
   keeplocal = TRUE,
   ...
@@ -41,10 +44,16 @@
 
 \item{at}{a date-time or date object for ticks on x axis}
 
+\item{nticks}{number of ticks on x axis}
+
 \item{type}{1-character string giving the type of plot desired (for details,
 see \link[graphics]{plot})}
 
 \item{lwd}{the line width (for details, see \link[graphics]{par})}
+
+\item{las}{the style of axis labels (for details, see \link[graphics]{par})}
+
+\item{cex.names}{expansion factor for axis names (for details, see \link[graphics]{barplot})}
 
 \item{col}{a specification for the default plotting color (for details, see \link[graphics]{par})}
 
