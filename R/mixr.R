@@ -8,12 +8,14 @@
 #' @param mdist the distance matrix between gauged and ungauged catchments as computed by
 #' the function \link{hdist}
 #' @param distance the method to use for computing distance matrix if \code{mdist} is not provided.
-#' Possible values are "ghosh", "ghosh2", "rghosh", "points", "centroids", "combined" as available
+#' Possible values are "ghosh", "rghosh", "points", "centroids", "combined" as available
 #' in the function \link{hdist}
 #' @param gres resolution of spatial discretisation (number of points by km²) for Ghosh
 #' distance (see the function \link{hdist})
-#' @param weightO weight given to the distance between outlets if \code{distance} is "combined" (see the function \link{hdist})
-#' @param weightC weight given to the distance between centroids if \code{distance} is "combined" (see the function \link{hdist})
+#' @param weightO weight given to the distance between outlets if \code{distance} is "combined"
+#' (see the function \link{hdist})
+#' @param weightC weight given to the distance between centroids if \code{distance} is "combined"
+#' (see the function \link{hdist})
 #' @param parallel logical indicating if the computation should be parallelised
 #' @param cores the number of cores to use for parallel execution if \code{parallel} is TRUE.
 #' If not specified, the number of cores is set to the value of \code{parallel::detectCores()}
@@ -92,7 +94,7 @@ mixr <- function(obs, sim, mdist, distance = "rghosh", gres = 5, weightO = 0.8, 
   }else{
     if(verbose) cat("### Computing distance matrix ###\n")
     mdist <- hdist(x=obs, y=sim, method=distance, gres=gres, weightO=weightO, weightC=weightC,
-                   parallel=parallel, cores=cores)
+                   parallel=parallel, cores=cores, verbose=verbose)
   }
 
   #--- Transfering Rn from obs to sim

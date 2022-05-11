@@ -38,7 +38,7 @@ hdist(x, y, ...)
 \item{...}{further arguments passed to or from other methods}
 
 \item{method}{the method to use for computing distance. This must be one of "ghosh",
-"rghosh","points","centroids","combined"}
+"rghosh", "points", "centroids", "combined"}
 
 \item{gres}{resolution of spatial discretisation (number of points by km²) for Ghosh
 distance}

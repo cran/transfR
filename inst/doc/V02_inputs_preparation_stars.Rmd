@@ -1,0 +1,95 @@
+---
+title: "Preparation of input data: creation of a stars object"
+author: "Alban de Lavenne"
+date: "`r Sys.Date()`"
+bibliography: "../inst/REFERENCES.bib"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Preparation of input data: creation of a stars object}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+fig_width: 8 
+fig_height: 4 
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Any time series in the transfR package is supposed to be georeferenced. In order to use your discharge observations in transfR, two inputs are thus required: the discharge time series and a georeferenced vector layer describing the location of this gauged catchments. These two attributes will be merged into one R object of class [stars](https://cran.r-project.org/package=stars). This vignette provides some guidance to create this object from common input formats.
+
+For the sake of the example, we will create a shapefile and a text file from the 'Oudon' example dataset provided with the transfR package:
+```{r, echo=TRUE, message=FALSE, results='hide', eval=FALSE}
+library(transfR)
+data(Oudon)
+
+st_write(st_sf(ID = paste0("ID",1:6), geom = st_geometry(Oudon$obs)), 
+         dsn = "catchments.shp", delete_layer = T)
+write.table(data.frame(DateTime = st_get_dimension_values(Oudon$obs,1), 
+                       ID1 = Oudon$obs$Qobs[,1], 
+                       ID2 = Oudon$obs$Qobs[,2], 
+                       ID3 = Oudon$obs$Qobs[,3], 
+                       ID4 = Oudon$obs$Qobs[,4], 
+                       ID5 = Oudon$obs$Qobs[,5], 
+                       ID6 = Oudon$obs$Qobs[,6] ), 
+            file = "discharge.txt", col.names = T, row.names = F, sep = "\t", quote = F)
+```
+
+## 1. Reading a vector layer with sf
+
+
+The spacial vector layer describes the location of the catchments. It could be the catchments delineation, outlet or centroid. However, catchment delineation allows a better assessment of the distances between them [@deLavenne2016].
+It is advised to use the [sf](https://cran.r-project.org/package=sf) package to load this layer.
+
+```{r, echo=TRUE, message=FALSE, results='hide', eval=FALSE}
+library(sf)
+catchments <- st_read("catchments.shp", "catchments", stringsAsFactors = F)
+obs_sf <- catchments[1:5,] # Gauged catchments
+sim_sf <- catchments[6,]   # Ungauged catchments
+```
+
+## 2. Reading a data frame of time series
+
+It is advised to provide the units of your discharge time series using the [units](https://cran.r-project.org/package=units) package.
+
+```{r, echo=TRUE, message=FALSE, results='hide', eval=FALSE}
+library(units)
+Q <- read.table("discharge.txt", header = T, sep = "\t")
+Qmatrix  <- as.matrix(Q[,-1])
+Qmatrix  <- set_units(Qmatrix,"m^3/s")
+```
+
+## 3. Creating a stars object
+
+These time series and the spacial vector layer are merged into one stars object. Make sure that both are organised in the same order. The stars object will have two dimensions (time and space) and one attribute (discharge observation) for gauged catchments. The ungauged catchments will have the same dimensions but no attribute for the moment.
+
+```{r, echo=TRUE, message=FALSE, results='hide', eval=FALSE}
+library(stars)
+Qmatrix  <- Qmatrix[,obs_sf$ID] #to have the same order as in the spacial data layer
+obs_st   <- st_as_stars(list(Qobs = Qmatrix), 
+                            dimensions = st_dimensions(time = as.POSIXct(Q$DateTime, tz="UTC"), 
+                                                       space = obs_sf$geometry))
+sim_st   <- st_as_stars(dimensions = st_dimensions(time = as.POSIXct(Q$DateTime, tz="UTC"), 
+                                                       space = sim_sf$geometry))
+```
+## 4. Creating a transfr object
+
+These stars objects can finally be used to create objects of class transfR by using the function *as_transfr()* (argument *st*) and perform simulations.
+
+```{r, echo=TRUE, message=FALSE, results='hide', eval=FALSE}
+obs <- as_transfr(st = obs_st, hl = Oudon$hl[1:5])
+sim <- as_transfr(st = sim_st, hl = Oudon$hl[6])
+```
+A transfer of hydrograph from the gauged catchments to the ungauged catchments can then quickly be implemented using the *quick_transfr()* function. The simulated time series will be available in its stars object as new attributes.
+
+```{r, echo=TRUE, message=FALSE, results='hide', eval=FALSE}
+sim <- quick_transfr(obs, sim)
+sim$st
+```
+
+## References
+
+<div id="refs"></div>

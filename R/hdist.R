@@ -5,7 +5,7 @@
 #' @param x sf, stars or transfR object of the first catchments
 #' @param y sf, stars or transfR object of the second catchments
 #' @param method the method to use for computing distance. This must be one of "ghosh",
-#' "rghosh","points","centroids","combined"
+#' "rghosh", "points", "centroids", "combined"
 #' @param gres resolution of spatial discretisation (number of points by km²) for Ghosh
 #' distance
 #' @param weightO weight given to the distance between outlets if method is "combined"
@@ -117,7 +117,7 @@ hdist.sfc <- function(x, y, method="rghosh", gres=5, ditself=FALSE, maxsample=2.
     return(gdist)
   }
   if(method=="rghosh"){
-    gdist <- hdist(x=x, y=y, method="ghosh", gres=gres, ditself=TRUE, maxsample=maxsample, proj=proj, parallel=parallel, cores=cores)
+    gdist <- hdist(x=x, y=y, method="ghosh", gres=gres, ditself=TRUE, maxsample=maxsample, proj=proj, parallel=parallel, cores=cores, verbose=verbose)
     if(verbose) cat("Rescaling Ghosh distance\n")
     rgdist <- matrix(NA,nrow=length(x),ncol=length(y))
     if(identical(x,y)){

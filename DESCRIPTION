@@ -1,8 +1,8 @@
 Package: transfR
 Type: Package
 Title: Transfer of Hydrograph from Gauged to Ungauged Catchments
-Version: 0.1.1
-Date: 2021-12-18
+Version: 0.1.2
+Date: 2022-05-11
 Authors@R: c(
   person("Alban", "de Lavenne", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9448-3490"), email = "alban.delavenne@inrae.fr"),
   person("Christophe", "Cudennec", role = c("ths"), comment = c(ORCID = "0000-0002-1707-8926"), email = "christophe.cudennec@agrocampus-ouest.fr"),
@@ -22,6 +22,8 @@ Description: A geomorphology-based hydrological modelling for transferring
     by spatial interpolation in order to finally simulate streamflow 
     following de Lavenne et al. (2016) <doi:10.1002/2016WR018716>.
 License: GPL-2
+URL: https://gitlab.irstea.fr/HYCAR-Hydro/transfr
+BugReports: https://gitlab.irstea.fr/HYCAR-Hydro/transfr/-/issues
 NeedsCompilation: yes
 Encoding: UTF-8
 Author: Alban de Lavenne [aut, cre] (<https://orcid.org/0000-0002-9448-3490>),
@@ -30,6 +32,6 @@ Author: Alban de Lavenne [aut, cre] (<https://orcid.org/0000-0002-9448-3490>),
   Hervé Squividant [ctb]
 Maintainer: Alban de Lavenne <alban.delavenne@inrae.fr>
 RoxygenNote: 7.1.2
-Packaged: 2021-12-18 23:41:06 UTC; delavenne
+Packaged: 2022-05-11 07:40:44 UTC; delavenne
 Repository: CRAN
-Date/Publication: 2021-12-20 16:00:02 UTC
+Date/Publication: 2022-05-11 08:10:02 UTC

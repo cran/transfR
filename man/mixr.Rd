@@ -33,15 +33,17 @@ mixr(
 the function \link{hdist}}
 
 \item{distance}{the method to use for computing distance matrix if \code{mdist} is not provided.
-Possible values are "ghosh", "ghosh2", "rghosh", "points", "centroids", "combined" as available
+Possible values are "ghosh", "rghosh", "points", "centroids", "combined" as available
 in the function \link{hdist}}
 
 \item{gres}{resolution of spatial discretisation (number of points by km²) for Ghosh
 distance (see the function \link{hdist})}
 
-\item{weightO}{weight given to the distance between outlets if \code{distance} is "combined" (see the function \link{hdist})}
+\item{weightO}{weight given to the distance between outlets if \code{distance} is "combined"
+(see the function \link{hdist})}
 
-\item{weightC}{weight given to the distance between centroids if \code{distance} is "combined" (see the function \link{hdist})}
+\item{weightC}{weight given to the distance between centroids if \code{distance} is "combined"
+(see the function \link{hdist})}
 
 \item{parallel}{logical indicating if the computation should be parallelised}
 
