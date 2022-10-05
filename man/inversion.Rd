@@ -115,8 +115,8 @@ called "RnAp".
 icatch <- 1 # Catchment index
 itime <- 1:1000 # Using the first values for a quicker example
 Qobs <- Oudon$obs[["Qobs"]][itime,icatch]
-Qspec <- units::set_units(Qobs/st_area(st_geometry(Oudon$obs)[icatch]),"mm/h")
-deltat <- units::set_units(1,"h")
+Qspec <- units::set_units(Qobs/st_area(st_geometry(Oudon$obs)[icatch]), "mm/h")
+deltat <- units::set_units(1, "h")
 uc <- velocity(hl = Oudon$hl[[icatch]])
 uh <- uh(hl = Oudon$hl[[icatch]], uc = uc, deltat = units::set_units(1,"h"))$prob
 RnAp <- rapriori(Qobs = Qspec, lagtime = lagtime(hl = Oudon$hl[[icatch]], uc = uc),

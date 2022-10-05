@@ -54,6 +54,6 @@ data(Oudon)
 icatch <- 1
 uc <- velocity(hl = Oudon$hl[[icatch]])
 uh <- uh(hl = Oudon$hl[[icatch]], uc = uc, deltat = units::set_units(1,"h"))$prob
-Rn <- units::set_units(c(1,5,2),"mm/h")
+Rn <- units::set_units(c(1,5,2), "mm/h")
 Qsim <- convolution(Rn = Rn, uh = uh)
 }

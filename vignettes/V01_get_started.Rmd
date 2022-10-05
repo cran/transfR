@@ -23,14 +23,14 @@ This package aims to estimate discharge time series of ungauged catchments (non-
 
 ## 1. Create a transfR object
 
-An object of class transfR needs to be created first with the function *as_transfr()*. It will also be used to gather all the catchment attributes and intermediary results from the different steps. This object needs to be created from two users inputs:
+An object of class transfR needs to be created first with the function `as_transfr()`. It will also be used to gather all the catchment attributes and intermediary results from the different steps. This object needs to be created from two users inputs:
 
-* a spatio-temporal object (stars object) that is describing both discharge and the corresponding spatial support (outlet, centroid or catchment boundary). 
-* raster maps of hydraulic length (stars or matrix object) for each catchment describing the flow path length from each pixel to the outlet within the river network [@Cudennec2004; @Aouissi2013].
+* a spatio-temporal object (stars object) that is describing both discharge and the corresponding spatial support (outlet, centroid or catchment boundary); see vignette [Preparation of input data: creation of a stars object](https://cran.r-project.org/package=transfR/vignettes/V02_inputs_preparation_stars.html). 
+* raster maps of hydraulic length (stars or matrix object) for each catchment describing the flow path length from each pixel to the outlet within the river network [@Cudennec2004; @Aouissi2013]; see vignette [Preparation of input data: geomorphological analysis with whitebox](https://cran.r-project.org/package=transfR/vignettes/V03_inputs_preparation_whitebox.html).
 
-This package does not provide functions to create these two inputs. It needs to be prepared beforehand by the user. Several GIS softwares offer possibilities to extract them from a digital elevation model such as GRASS toolkits [@Jasiewicz2011], Whitebox GAT (see @Lindsay2016 or [WhiteboxTools](https://github.com/jblindsay/whitebox-tools)), TauDEM (D. Tarboton, Utah State University) or online services (@Squividant2015 for catchment delineation only).
+This package does not provide functions to create these two inputs. It needs to be prepared beforehand by the user. Several GIS softwares offer possibilities to extract them from a digital elevation model such as GRASS toolkits [@Jasiewicz2011], Whitebox GAT (see @Lindsay2016 or [WhiteboxTools](https://github.com/jblindsay/whitebox-tools)), TauDEM (D. Tarboton, Utah State University) or online services (@Squividant2015 for catchment delineation only). The vignettes mentioned above give some guidance on the preparation of input data.
 
-The 'Oudon' example dataset contains these two inputs with hourly discharge observation of 6 sub-catchments (Oudon French river) with their respective catchment boundary and maps of their hydraulic length. All catchments are gauged, however, in this example, we will use the first 3 as gauged catchments and the last 3 as ungauged catchments. Note that, in order to evaluate the methodology, the package can also perform a leave-one-out analysis by considering each gauged catchment as ungauged one after another and without the need of creating the following "sim" object (set "cv"=TRUE when using *mixr()* function, step 6).
+The 'Oudon' example dataset contains these two inputs with hourly discharge observation of 6 sub-catchments (Oudon French river) with their respective catchment boundary and maps of their hydraulic length. All catchments are gauged, however, in this example, we will use the first 3 as gauged catchments and the last 3 as ungauged catchments. Note that, in order to evaluate the methodology, the package can also perform a leave-one-out analysis by considering each gauged catchment as ungauged one after another and without the need of creating the following `sim` object (set `cv=TRUE` when using `mixr()` function, step 6).
 
 ```{r, echo=TRUE, message=FALSE, fig.width=7, fig.height=4}
 library(transfR)
@@ -48,7 +48,7 @@ plot(obs$hl[[1]], axes = T, main = "Hydraulic length of gauged catchment 1 [m]",
 
 ## 2. Streamflow velocity
 
-The streamflow velocity (uc) is the unique parameter of the transfer function that needs to be estimated. It allows assessing the travel time from each pixel of the map of hydraulic length (hl) to the outlet, and then to create the unit hydrograph (uh). Here we will use the function *velocity()* to estimate an average streamflow velocity from a regionalisation established over the Loire River [@deLavenne2016; see help of the function for details]. If the input of *velocity()* is a transfR object, the velocity will be computed for each catchment.
+The streamflow velocity (`uc`) is the unique parameter of the transfer function that needs to be estimated. It allows assessing the travel time from each pixel of the map of hydraulic length (`hl`) to the outlet, and then to create the unit hydrograph (`uh`). Here we will use the function `velocity()` to estimate an average streamflow velocity from a regionalisation established over the Loire River [@deLavenne2016; see help of the function for details]. If the input of `velocity()` is a transfR object, the velocity will be computed for each catchment.
 
 ```{r, echo=TRUE, message=TRUE, fig.width=7, fig.height=4}
 obs <- velocity(obs, method = "loire2016")
@@ -60,7 +60,7 @@ sim$uc
 
 ## 3. A geomorphology based unit hydrograph
 
-Assuming a description of the flow path length (hl) and a streamflow velocity (uc), the transfer function of the river network can be built based on the unit hydrograph theory. This is done using the function *uh()* that requires these two inputs. If the input of *uh()* is a transfR object the unit hydrograph will be computed for each catchments.
+Assuming a description of the flow path length (`hl`) and a streamflow velocity (`uc`), the transfer function of the river network can be built based on the unit hydrograph theory. This is done using the function `uh()` that requires these two inputs. If the input of `uh()` is a transfR object the unit hydrograph will be computed for each catchments.
 
 ```{r, echo=TRUE, message=FALSE, results='hide', fig.width=7, fig.height=4}
 obs <- uh(obs)
@@ -70,7 +70,7 @@ plot(obs, i = 1, attribute = "uh")
 
 ## 4. Net rainfall estimated *a priori*
 
-To solve the inversion, an *a priori* on the net rainfall needs to be provided. We will estimate this *a priori* through the specific discharge simply delayed by a lagtime using functions *lagtime()* and *rapriori()*.
+To solve the inversion, an *a priori* on the net rainfall needs to be provided. We will estimate this *a priori* through the specific discharge simply delayed by a lagtime using functions `lagtime()` and `rapriori()`.
 
 ```{r, echo=TRUE, message=FALSE, results='hide'}
 obs <- lagtime(obs)
@@ -79,7 +79,7 @@ obs <- rapriori(obs)
 
 ## 5. Net rainfall estimated by inversion
 
-Using the results of previous steps, the inversion can finally be computed in order to estimate net rainfall time series of each gauged catchment that best reconstitute the observed discharge according to the transfer function. This is done following the inversion theory [@Tarantola1982; @Menke1989; @Boudhraa2018; see help of *inversion()* for more details] (see help of *inversion()* for more details). If the inputs of *inversion()* is a transfR object, the net rainfall will be estimated for each gauged catchment sequentially.
+Using the results of previous steps, the inversion can finally be computed in order to estimate net rainfall time series of each gauged catchment that best reconstitute the observed discharge according to the transfer function. This is done following the inversion theory [@Tarantola1982; @Menke1989; @Boudhraa2018; see help of `inversion()` for more details] (see help of `inversion()` for more details). If the inputs of `inversion()` is a transfR object, the net rainfall will be estimated for each gauged catchment sequentially.
 
 ```{r Inversion, echo=TRUE, message=FALSE, results='hide'}
 obs <- inversion(obs, parallel = TRUE, cores=2)
@@ -87,7 +87,7 @@ obs <- inversion(obs, parallel = TRUE, cores=2)
 
 ## 6. Estimate net rainfall at ungauged locations
 
-The net rainfall of an ungauged catchment is an average value of neighbouring gauged catchments. This average can be weighted by the inverse of the distance between the gauged catchment and the ungauged catchment. The distance between two catchments is the rescaled Ghosh distance (using the function *hdist()*) as defined by @deLavenne2016. The function *transfr()* is then using this distance matrix to estimate the net rainfall time series at every ungauged location. 
+The net rainfall of an ungauged catchment is an average value of neighbouring gauged catchments. This average can be weighted by the inverse of the distance between the gauged catchment and the ungauged catchment. The distance between two catchments is the rescaled Ghosh distance (using the function `hdist()`) as defined by @deLavenne2016. The function `transfr()` is then using this distance matrix to estimate the net rainfall time series at every ungauged location. 
 
 ```{r, fig.show='hold', echo=TRUE, message=FALSE, results='hide'}
 mdist <- hdist(x = obs, y = sim, method = "rghosh", parallel = TRUE, cores=2)
@@ -96,7 +96,7 @@ sim <- mixr(obs = obs, sim = sim, mdist = mdist)
 
 ## 7. Simulate discharge at ungauged locations
 
-A discharge time series at ungauged locations can finally be simulated through a convolution between the unit hydrograph and the net rainfall time series of each catchment. This is done with the function *convolution()*. In this example, it is possible to compare discharge simulation and discharge observation because ungauged locations were deliberately defined from gauged locations (as defined in step 1.). Note that the beginning and the end of the simulation are cut because of the warmup and cooldown periods needed for the inversion.
+A discharge time series at ungauged locations can finally be simulated through a convolution between the unit hydrograph and the net rainfall time series of each catchment. This is done with the function `convolution()`. In this example, it is possible to compare discharge simulation and discharge observation because ungauged locations were deliberately defined from gauged locations (as defined in step 1.). Note that the beginning and the end of the simulation are cut because of the warmup and cooldown periods needed for the inversion.
 
 ```{r, fig.show='hold', echo=TRUE, message=FALSE, results='hide', fig.width=7, fig.height=4}
 sim <- convolution(sim)

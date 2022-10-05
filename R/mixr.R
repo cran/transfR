@@ -1,6 +1,6 @@
-#' Transfer of net rainfall and discharge simulation
+#' Transfer of net rainfall to ungauged catchments
 #'
-#' Combine net rainfall of gauged catchments to simulate the discharge
+#' Combine the net rainfall of gauged catchments to simulate the net rainfall
 #' of an ungauged catchment.
 #' @name mixr
 #' @param obs "transfR" object of the gauged catchments
@@ -44,21 +44,21 @@
 #' The simulated net rainfall of a given ungauged catchment \eqn{i} is a weighted average of the net rainfalls
 #' of \code{ndonors} gauged catchments \eqn{j}:
 #' \deqn{R_n^i =\Sigma_{j=1}^{ndonors} R_n^j \cdot \lambda_j}
-#' where \eqn{\lambda_j} are defined by a inverse distance weighting function (see \link{weightr}).
+#' where \eqn{\lambda_j} are defined by an inverse distance weighting function (see \link{weightr}).
 #' @seealso \link{hdist}, \link{weightr}
 #' @examples
 #' \donttest{data(Oudon)
-#' object <- as_transfr(st=Oudon$obs,hl=Oudon$hl)
+#' object <- as_transfr(st = Oudon$obs, hl = Oudon$hl)
 #' object <- velocity(object)
 #' object <- uh(object)
 #' object <- lagtime(object)
 #' object <- rapriori(object)
-#' object <- inversion(object, parallel = TRUE, cores=2)
-#' mdist  <- hdist(x=object, y=object, method="rghosh")
-#' object <- mixr(obs = object, mdist=mdist, parallel = TRUE, cores=2,
-#' cv=TRUE, flexible_donor=TRUE, save_donor = FALSE)
+#' object <- inversion(object, parallel = TRUE, cores = 2)
+#' mdist  <- hdist(x = object, y = object, method = "rghosh")
+#' object <- mixr(obs = object, mdist = mdist, parallel = TRUE, cores=2,
+#' cv = TRUE, flexible_donor = TRUE, save_donor = FALSE)
 #' object <- convolution(object, save_donor = FALSE)
-#' plot(object,i=1,attribute=c("Qobs","Qsim"))}
+#' plot(object, i = 1, attribute = c("Qobs", "Qsim"))}
 #' @export
 mixr <- function(obs, sim, mdist, distance = "rghosh", gres = 5, weightO = 0.8, weightC = 0.2,
                     parallel = FALSE, cores = NULL, power = 1, ndonors = 5, donors = NULL, maxdist = 50e3,

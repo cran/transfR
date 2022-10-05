@@ -23,10 +23,10 @@
 #' plot(units::set_units(uh1$max_time,"h"), cumsum(uh1$prob), type = "b",
 #' xlab = "Travel~time", ylab = "Probability~of~non-exceedance")
 #'
-#' object <- as_transfr(st=Oudon$obs,hl=Oudon$hl)
+#' object <- as_transfr(st = Oudon$obs, hl = Oudon$hl)
 #' object <- velocity(object)
 #' object <- uh(object)
-#' plot(object,i=1,attribute=c("uh"))
+#' plot(object, i = 1, attribute = c("uh"))
 #' @export
 uh = function(hl, ...) UseMethod("uh")
 

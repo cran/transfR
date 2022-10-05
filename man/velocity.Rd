@@ -48,9 +48,9 @@ and \eqn{b=0.61} \insertCite{deLavenne2013}{transfR}.
 }
 \examples{
 data(Oudon)
-velocity(Oudon$hl[[1]], method="loire2016")
+velocity(Oudon$hl[[1]], method = "loire2016")
 
-object <- as_transfr(st=Oudon$obs, hl=Oudon$hl)
+object <- as_transfr(st = Oudon$obs, hl = Oudon$hl)
 object <- velocity(object)
 object$uc
 }

@@ -45,5 +45,5 @@ from the ratio of the mean hydraulic length (\code{hl}) and the average streamfl
 \examples{
 data(Oudon)
 icatch <- 1
-lagtime(Oudon$hl[[icatch]],uc=units::set_units(0.5,"m/s"))
+lagtime(Oudon$hl[[icatch]], uc = units::set_units(0.5, "m/s"))
 }

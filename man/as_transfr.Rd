@@ -64,7 +64,7 @@ or online services (\insertCite{@see @Squividant2015;textual}{transfR} for catch
 }
 \examples{
 data(Oudon)
-object <- as_transfr(st=Oudon$obs,hl=Oudon$hl)
+object <- as_transfr(st = Oudon$obs, hl = Oudon$hl)
 }
 \references{
 \insertRef{Aouissi2013}{transfR}

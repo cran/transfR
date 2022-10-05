@@ -69,8 +69,8 @@
 #' icatch <- 1 # Catchment index
 #' itime <- 1:1000 # Using the first values for a quicker example
 #' Qobs <- Oudon$obs[["Qobs"]][itime,icatch]
-#' Qspec <- units::set_units(Qobs/st_area(st_geometry(Oudon$obs)[icatch]),"mm/h")
-#' deltat <- units::set_units(1,"h")
+#' Qspec <- units::set_units(Qobs/st_area(st_geometry(Oudon$obs)[icatch]), "mm/h")
+#' deltat <- units::set_units(1, "h")
 #' uc <- velocity(hl = Oudon$hl[[icatch]])
 #' uh <- uh(hl = Oudon$hl[[icatch]], uc = uc, deltat = units::set_units(1,"h"))$prob
 #' RnAp <- rapriori(Qobs = Qspec, lagtime = lagtime(hl = Oudon$hl[[icatch]], uc = uc),
@@ -140,7 +140,7 @@ inversion.units <- function(Qobs, uh, RnAp, deltat, Bd = 0.01, Dd = 1, Bp = 0.00
   for(i in 1:(length(bna)-1)) period[i+1] <- period[i]+abs(bna[i]-bna[i+1])
   if(max(period)>2){
     Rn <- NA
-    for(p in unique(period[bna])) Rn[period==p] <- inversion.units(Qobs = Qobs[period==p], uh = uh, RnAp = RnAp[period==p], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit=dosplit, split = split, fixedpar = TRUE, parallel = parallel)
+    for(p in unique(period[bna])) Rn[period==p] <- inversion.units(Qobs = Qobs[period==p], uh = uh, RnAp = RnAp[period==p], deltat = deltat, Bd = Bd, Dd = Dd, Bp = Bp, Tp = Tp, Ad = Ad, Ap = Ap, warmup = warmup, cooldown = cooldown, dosplit = dosplit, split = split, fixedpar = TRUE, parallel = parallel)
     return(Rn)
   }
 
@@ -172,7 +172,7 @@ inversion.units <- function(Qobs, uh, RnAp, deltat, Bd = 0.01, Dd = 1, Bp = 0.00
     cuts_start <- cuts_start[!duplicated(cuts_end)]
     cuts_end   <- cuts_end[!duplicated(cuts_end)]
     if(parallel){
-      if(missing(cores)) cores <- parallel::detectCores()
+      if(missing(cores)|is.null(cores)) cores <- parallel::detectCores()
       cl <- parallel::makeCluster(cores)
       doParallel::registerDoParallel(cl=cl)
       on.exit(parallel::stopCluster(cl))

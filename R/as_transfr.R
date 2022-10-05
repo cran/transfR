@@ -31,7 +31,7 @@
 #' or online services (\insertCite{@see @Squividant2015;textual}{transfR} for catchment delineation in the Brittany French region).
 #' @examples
 #' data(Oudon)
-#' object <- as_transfr(st=Oudon$obs,hl=Oudon$hl)
+#' object <- as_transfr(st = Oudon$obs, hl = Oudon$hl)
 #' @import sf stars
 #' @importFrom units set_units
 #' @references
@@ -64,11 +64,11 @@ as_transfr <- function(object, st, uc, lagtime, surface, delineation, outlet, ce
     # if("Qobs"%in%names(st)) st[[which(names(st)=="Qobs")]] <- units::set_units(st[[which(names(st)=="Qobs")]],"m^3/s")
 
     #--Deducing time step
-    deltat <- unique(difftime(st_get_dimension_values(st,1)[-1],st_get_dimension_values(st,1)[-dim(st)[1]],units="mins"))
+    deltat <- unique(difftime(st_get_dimension_values(st,1)[-1], st_get_dimension_values(st,1)[-dim(st)[1]], units = "mins"))
     if(length(deltat)==1){
-      deltat <- units::set_units(deltat,"min")
+      deltat <- units::set_units(deltat, "min")
       object$deltat <- deltat
-    }else{stop("Time step must be steady.")}
+    }else{stop(paste0("Time step must be steady. Detected time steps: ", paste0(deltat, "min", collapse = ", "), "."))}
 
     #--Set up units
     if("Qobs"%in%names(st)) st[["Qobs"]] <- units::set_units(st[["Qobs"]],"m^3/s")
@@ -123,8 +123,9 @@ as_transfr <- function(object, st, uc, lagtime, surface, delineation, outlet, ce
     if(!inherits(hl, "list")) stop("The class of 'hl' must be a list")
     if(length(hl)!=dim(object$st)[2]) stop(paste0("Length of 'hl' is ",length(hl)," but there are ",dim(object$st)[2]," spatial features."))
     classes <- c("stars","matrix","units")
-    if(any(!unlist(lapply(hl,class))%in%classes)) stop(paste("Variables contained in the list of 'hl' can only be",paste(classes,collapse=" or ")))
+    if(any(!sapply(hl,class)%in%classes)) stop(paste("Variables contained in the list of 'hl' can only be",paste(classes,collapse=" or ")))
     object$hl <- lapply(hl,FUN=function(x){x[[1]] <- units::set_units(x[[1]],"m");return(x)})
+    if(any(sapply(hl,function(x) any(x[[1]] < units::set_units(0,"m"), na.rm=TRUE)))) stop("Negative values of 'hl' detected.")
   }
   return(object)
 }

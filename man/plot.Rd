@@ -66,6 +66,6 @@ Plot transfR object.
 }
 \examples{
 data(Oudon)
-object <- as_transfr(st=Oudon$obs,hl=Oudon$hl)
-plot(object,attribute="Qobs")
+object <- as_transfr(st = Oudon$obs, hl = Oudon$hl)
+plot(object, attribute = "Qobs")
 }

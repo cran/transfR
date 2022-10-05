@@ -17,7 +17,7 @@
 #' @examples
 #' data(Oudon)
 #' icatch <- 1
-#' lagtime(Oudon$hl[[icatch]],uc=units::set_units(0.5,"m/s"))
+#' lagtime(Oudon$hl[[icatch]], uc = units::set_units(0.5, "m/s"))
 #' @export
 lagtime = function(hl, ...) UseMethod("lagtime")
 

@@ -1,8 +1,8 @@
 Package: transfR
 Type: Package
 Title: Transfer of Hydrograph from Gauged to Ungauged Catchments
-Version: 0.1.2
-Date: 2022-05-11
+Version: 1.0.0
+Date: 2022-10-04
 Authors@R: c(
   person("Alban", "de Lavenne", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9448-3490"), email = "alban.delavenne@inrae.fr"),
   person("Christophe", "Cudennec", role = c("ths"), comment = c(ORCID = "0000-0002-1707-8926"), email = "christophe.cudennec@agrocampus-ouest.fr"),
@@ -13,7 +13,7 @@ Depends: R (>= 3.5.0), stars (>= 0.4-0), sf (>= 0.8-0)
 Imports: doParallel, foreach, units, Rdpack
 RdMacros: Rdpack
 VignetteBuilder: knitr
-Suggests: knitr, rmarkdown
+Suggests: knitr, rmarkdown, elevatr, whitebox
 Description: A geomorphology-based hydrological modelling for transferring
     streamflow measurements from gauged to ungauged catchments. Inverse
     modelling enables to estimate net rainfall from streamflow measurements 
@@ -31,7 +31,7 @@ Author: Alban de Lavenne [aut, cre] (<https://orcid.org/0000-0002-9448-3490>),
   Tom Loree [ctb],
   Hervé Squividant [ctb]
 Maintainer: Alban de Lavenne <alban.delavenne@inrae.fr>
-RoxygenNote: 7.1.2
-Packaged: 2022-05-11 07:40:44 UTC; delavenne
+RoxygenNote: 7.2.1
+Packaged: 2022-10-05 22:28:38 UTC; delavenne
 Repository: CRAN
-Date/Publication: 2022-05-11 08:10:02 UTC
+Date/Publication: 2022-10-05 23:00:02 UTC
