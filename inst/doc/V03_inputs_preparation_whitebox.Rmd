@@ -43,12 +43,14 @@ It is necessary to assign a geographic projection for the catchment delineation 
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 library(elevatr)
+library(rgdal) # Still often needed by elevatr
+library(progress) # Still often needed by elevatr
 
 # Set up a projection (French Lambert-93 projection)
 EPSG <- 2154 
 
 # Define a bbox that will encompass the catchments of the study area
-blavet_bbox <- st_bbox(c(xmin = -3.5, xmax = -2.5, ymax = 48.5, ymin = 47.5), 
+blavet_bbox <- st_bbox(c(xmin = -3.3, xmax = -2.7, ymax = 48.11, ymin = 47.77), 
                            crs = st_crs(4326))
 
 # Retrieve elevation data as raster
@@ -67,7 +69,25 @@ write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
 
 ## 2. Retrieve a known river network and burn it into DEM (optional)
 
-The hydrological modelling distinguish the hillslope from the river network. Both will have very different transfer dynamics, and the `transfR` package aims to describe the transfer function of the river network only. Defining where this river network begins and the flow path it takes is a key, and non-trivial, issue for hydrogeomorphologists. The easiest way to draw a drainage network from a DEM is usually to define a minimum drainage area threshold at which the drainage network is assumed to start. However, defining this threshold can be difficult as it may vary spatially, especially with the geology of the region. It may therefore be better to use a known river network and force the flow paths to follow it. Here we will use the [French TOPAGE river network](https://bdtopage.eaufrance.fr/) as a reference and use a stream burning technique into the DEM following @Lindsay2016a and using the function [`whitebox::wbt_burn_streams_at_roads()`](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#BurnStreamsAtRoads).
+The hydrological modelling distinguish the hillslope from the river network. Both will have very different transfer dynamics, and the `transfR` package aims to describe the transfer function of the river network only. Defining where this river network begins and the flow path it takes is a key, and non-trivial, issue for hydrogeomorphologists. The easiest way to draw a drainage network from a DEM is usually to define a minimum drainage area threshold at which the drainage network is assumed to start. However, defining this threshold can be difficult as it may vary spatially, especially with the geology of the region. It may therefore be better to use a known river network and force the flow paths to follow it. Here we will use the [French TOPAGE river network](https://bdtopage.eaufrance.fr/) as a reference and use a stream burning technique into the DEM following @Lindsay2016a.
+
+A vector layer of our reference river network is first downloaded from a Web Feature Service (WFS).
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+# Download a French Topage river network within the bbox using the "Sandre - Eau France" WFS
+download.file(url = paste0("https://services.sandre.eaufrance.fr/geo/topage2019",
+                     "?request=GetFeature&service=WFS&version=2.0.0",
+                     "&typeName=CoursEau_FXX_Topage2019",
+                     "&outputFormat=application/json;%20subtype=geojson&BBOX=",
+                     paste0(blavet_bbox[c("ymin","xmin","ymax","xmax")], 
+                            collapse=",")), 
+              destfile = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"))
+CoursEau_Topage2019 <- st_read(dsn = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"), 
+                               drivers = "GeoJSON", stringsAsFactors = FALSE, quiet = FALSE,
+                               query = "SELECT gid FROM CoursEau_FXX_Topage2019")
+```
+
+After a reprojection and rasterization of this river network, the function [`whitebox::wbt_burn_streams_at_roads()`](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#BurnStreamsAtRoads) is used to burn it into the DEM.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'}
 # If WhiteboxTools executable are not present, install it in the temporary directory
@@ -76,7 +96,7 @@ if(!wbt_init()){
   install_whitebox(pkg_dir = wbt_wd)
   exe_path <- file.path(wbt_wd, "WBT", "whitebox_tools") # Unix
   if(!file.exists(exe_path)) exe_path <- paste0(exe_path,".exe") # Windows
-  if(!file.exists(exe_path)) stop("WhiteboxTools executable  not found")
+  if(!file.exists(exe_path)) stop("WhiteboxTools executable not found")
   wbt_options(exe_path = exe_path,
               wd = wbt_wd)
 }
@@ -84,14 +104,6 @@ if(!wbt_init()){
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 library(whitebox)
-
-# Download a French Topage river network within the bbox using the "Sandre - Eau France" WFS
-CoursEau_Topage2019 <- st_read(paste0("https://services.sandre.eaufrance.fr/geo/topage2019",
-                                      "?request=GetFeature&service=WFS&version=2.0.0",
-                                      "&typeName=CoursEau_FXX_Topage2019",
-                                      "&outputFormat=application/json;%20subtype=geojson&BBOX=",
-                                      paste0(blavet_bbox[c("ymin","xmin","ymax","xmax")], 
-                                             collapse=",")))
 
 # Change projection and write files
 network_topage <- st_transform(CoursEau_Topage2019, EPSG)
@@ -117,7 +129,7 @@ whitebox::wbt_burn_streams_at_roads(dem = "dem_100m.tif",
 
 ## 3. Delineate catchments from their outlets coordinates
 
-The `whitebox` package provides all the tools to perform a usual catchment delineation workflow from a DEM and outlets coordinates. It can be done in 6 different steps:
+The `whitebox` package provides all the tools to perform a usual catchment delineation workflow from a DEM and outlet's coordinates. It can be done in 6 different steps:
 
 * [Fill the depressions](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#FillDepressions),
 * [Compute flow direction](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#D8Pointer) using D8 algorithm,
@@ -165,8 +177,8 @@ data(Blavet)
 
 # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 outlets_coordinates <- data.frame(id = names(Blavet$hl),
-                             X = c(254010.612,255940,255903,237201,273672,265550),
-                             Y = c(6772515.474,6776418-25,6776495,6774304-15,6762681,6783313))
+                             X = c(254010.612,255940-100,255903,237201,273672,265550),
+                             Y = c(6772515.474,6776418-200,6776495,6774304-200,6762681,6783313))
 outlets <- st_as_sf(outlets_coordinates, coords = c("X", "Y"), crs=2154)
 st_write(outlets, dsn = file.path(wbt_wd, "outlets.shp"), 
              delete_layer = TRUE, quiet = TRUE)
@@ -190,8 +202,8 @@ for(id in outlets_snapped$id){
                           wd = wbt_wd)
   # Vectorize catchments
   drainage <- read_stars(file.path(wbt_wd, paste0(id, "_catchment.tif")))
-  contours <- st_contour(drainage, breaks = 1)
-  contours <- st_cast(contours[which.max(st_area(contours)),],"POLYGON")
+  contours <- st_contour(drainage, breaks = 1) |> st_cast("POLYGON")
+  contours <- contours[which.max(st_area(contours)),]
   catchments <- rbind(catchments, st_sf(data.frame(id, geom = st_geometry(contours))))
 }
 ```
@@ -202,7 +214,7 @@ Resulting catchments delineation can be plotted and checked.
 # Compare drainage areas to the dataset provided with transfR
 compare_areas <- data.frame(
   name = names(Blavet$hl),
-  expected_area = st_area(st_geometry(Blavet$obs)) |> units::set_units("km^2") |> round(1),
+  expected_area =  st_area(st_geometry(Blavet$obs)) |> units::set_units("km^2") |> round(1),
   computed_area = st_area(catchments) |> units::set_units("km^2") |> round(1)
 )
 

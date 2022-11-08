@@ -10,12 +10,14 @@ wbt_wd <- tempdir(check = TRUE)
 
 ## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
 library(elevatr)
+library(rgdal) # Still often needed by elevatr
+library(progress) # Still often needed by elevatr
 
 # Set up a projection (French Lambert-93 projection)
 EPSG <- 2154 
 
 # Define a bbox that will encompass the catchments of the study area
-blavet_bbox <- st_bbox(c(xmin = -3.5, xmax = -2.5, ymax = 48.5, ymin = 47.5), 
+blavet_bbox <- st_bbox(c(xmin = -3.3, xmax = -2.7, ymax = 48.11, ymin = 47.77), 
                            crs = st_crs(4326))
 
 # Retrieve elevation data as raster
@@ -31,6 +33,19 @@ dem_100m[dem_100m < 0] <- NA
 # Write to file
 write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
 
+## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+# Download a French Topage river network within the bbox using the "Sandre - Eau France" WFS
+download.file(url = paste0("https://services.sandre.eaufrance.fr/geo/topage2019",
+                     "?request=GetFeature&service=WFS&version=2.0.0",
+                     "&typeName=CoursEau_FXX_Topage2019",
+                     "&outputFormat=application/json;%20subtype=geojson&BBOX=",
+                     paste0(blavet_bbox[c("ymin","xmin","ymax","xmax")], 
+                            collapse=",")), 
+              destfile = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"))
+CoursEau_Topage2019 <- st_read(dsn = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"), 
+                               drivers = "GeoJSON", stringsAsFactors = FALSE, quiet = FALSE,
+                               query = "SELECT gid FROM CoursEau_FXX_Topage2019")
+
 ## ---- echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'-----
 # If WhiteboxTools executable are not present, install it in the temporary directory
 library(whitebox)
@@ -38,21 +53,13 @@ if(!wbt_init()){
   install_whitebox(pkg_dir = wbt_wd)
   exe_path <- file.path(wbt_wd, "WBT", "whitebox_tools") # Unix
   if(!file.exists(exe_path)) exe_path <- paste0(exe_path,".exe") # Windows
-  if(!file.exists(exe_path)) stop("WhiteboxTools executable  not found")
+  if(!file.exists(exe_path)) stop("WhiteboxTools executable not found")
   wbt_options(exe_path = exe_path,
               wd = wbt_wd)
 }
 
 ## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
 library(whitebox)
-
-# Download a French Topage river network within the bbox using the "Sandre - Eau France" WFS
-CoursEau_Topage2019 <- st_read(paste0("https://services.sandre.eaufrance.fr/geo/topage2019",
-                                      "?request=GetFeature&service=WFS&version=2.0.0",
-                                      "&typeName=CoursEau_FXX_Topage2019",
-                                      "&outputFormat=application/json;%20subtype=geojson&BBOX=",
-                                      paste0(blavet_bbox[c("ymin","xmin","ymax","xmax")], 
-                                             collapse=",")))
 
 # Change projection and write files
 network_topage <- st_transform(CoursEau_Topage2019, EPSG)
@@ -110,8 +117,8 @@ data(Blavet)
 
 # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 outlets_coordinates <- data.frame(id = names(Blavet$hl),
-                             X = c(254010.612,255940,255903,237201,273672,265550),
-                             Y = c(6772515.474,6776418-25,6776495,6774304-15,6762681,6783313))
+                             X = c(254010.612,255940-100,255903,237201,273672,265550),
+                             Y = c(6772515.474,6776418-200,6776495,6774304-200,6762681,6783313))
 outlets <- st_as_sf(outlets_coordinates, coords = c("X", "Y"), crs=2154)
 st_write(outlets, dsn = file.path(wbt_wd, "outlets.shp"), 
              delete_layer = TRUE, quiet = TRUE)
@@ -135,8 +142,8 @@ for(id in outlets_snapped$id){
                           wd = wbt_wd)
   # Vectorize catchments
   drainage <- read_stars(file.path(wbt_wd, paste0(id, "_catchment.tif")))
-  contours <- st_contour(drainage, breaks = 1)
-  contours <- st_cast(contours[which.max(st_area(contours)),],"POLYGON")
+  contours <- st_contour(drainage, breaks = 1) |> st_cast("POLYGON")
+  contours <- contours[which.max(st_area(contours)),]
   catchments <- rbind(catchments, st_sf(data.frame(id, geom = st_geometry(contours))))
 }
 
@@ -144,7 +151,7 @@ for(id in outlets_snapped$id){
 # Compare drainage areas to the dataset provided with transfR
 compare_areas <- data.frame(
   name = names(Blavet$hl),
-  expected_area = st_area(st_geometry(Blavet$obs)) |> units::set_units("km^2") |> round(1),
+  expected_area =  st_area(st_geometry(Blavet$obs)) |> units::set_units("km^2") |> round(1),
   computed_area = st_area(catchments) |> units::set_units("km^2") |> round(1)
 )
 

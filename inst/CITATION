@@ -1,0 +1,42 @@
+year    <- sub("-.*", "", meta$Date)
+version <- meta$Version
+note    <- sprintf("R package version %s", version)
+
+
+citHeader("To cite transfR in publications use these two references:")
+
+bibentry(bibtype="Article",
+         title = "The {transfR} toolbox for transferring observed streamflow series to ungauged basins based on their hydrogeomorphology",
+         author = personList(as.person("Alban de Lavenne"), as.person("Tom Loree"), as.person("Hervé Squividant"), as.person("Christophe Cudennec")),
+         journal = "Environmental Modelling and Software",
+         year = "2023",
+         pages = {"105562"},
+         volume = {159},
+         doi = "10.1016/j.envsoft.2022.105562",
+         textVersion =
+           paste("de Lavenne, A., Loree, T., Squividant, H. and Cudennec, C.",
+                 "(2023).",
+                 "The transfR toolbox for transferring observed streamflow series to ungauged basins based on their hydrogeomorphology.",
+                 "Environmental Modelling and Software,",
+                 "159, 105562.",
+                 "DOI: 10.1016/j.envsoft.2022.105562.",
+                 sep = " ")
+)
+
+bibentry(bibtype     = "Manual",
+         title       = "{transfR}: Transfer of Hydrograph from Gauged to Ungauged Catchments",
+         author      = personList(as.person("Alban de Lavenne"), as.person("Tom Loree"), as.person("Hervé Squividant"), as.person("Christophe Cudennec")),
+         journal     = "R News",
+         year        = year,
+         note        = note,
+         doi         = "10.57745/ZYNPKQ",
+         url         = "https://CRAN.R-project.org/package=transfR",
+         textVersion =
+           paste0("de Lavenne, A., Loree, T., Squividant, H. and Cudennec, C. (",
+                  year,
+                  "). transfR: Transfer of Hydrograph from Gauged to Ungauged Catchments. ",
+                  note, ", ",
+                  "doi: 10.57745/ZYNPKQ", ", ",
+                  "URL: https://CRAN.R-project.org/package=transfR."
+                  )
+)

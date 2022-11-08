@@ -6,13 +6,13 @@
 
 
 \description{
-This R package aims to propose a geomorphology-based hydrological modelling to transfer streamflow measurements from gauged catchments to ungauged catchments (where there is no stations monitoring the streamflow). It follows a runoff-runoff approach, i.e. it directly combines the observed streamflow series available at monitoring stations to estimate the streamflow series anywhere else in the surroundings rivers and without the need to implement a full rainfall-runoff model. \cr\cr
+This R package aims to propose a geomorphology-based hydrological modelling to transfer streamflow measurements from gauged catchments to ungauged catchments, i.e. where there is no station monitoring the streamflow. It follows a runoff-runoff approach, i.e. it directly combines the observed streamflow series available at monitoring stations to estimate the streamflow series anywhere else in the surroundings rivers and without the need to implement a full rainfall-runoff model. The package itself and theoretical aspects of the approach are presented in detail and discussed by de Lavenne et al. (2023). \cr\cr
 
 
 
 ## --- Short description of the modelling approach
 
-The hydrological modelling is based on a description of the hydro-geomorphometry of the river network which can be easily observed for any given outlet. An inversion of this model for a gauged catchment allows the observed streamflow series to be deconvoluted in order to estimate an almost scale-independent signal, namely the net rainfall \insertCite{Boudhraa2018}{transfR}. Transferring this estimate of the net rainfall series to a targeted ungauged catchment then allows to simulate the streamflow there. The use of streamflow observations from several gauged catchments of the neighbourhood increases the robustness of the simulation \insertCite{deLavenne2016}{transfR}. The methodology has first been implemented on a few catchments in semiarid Tunisia at the event time scale \insertCite{Boudhraa2009}{transfR}, then in dense configurations of neighbouring and nesting catchments in France with mainly temperate oceanic climate \insertCite{deLavenne2015,deLavenne2016,deLavenne2019}{transfR} and in snow-influenced Québec, Canada \insertCite{Ecrepont2019}{transfR}. \cr\cr
+The hydrological modelling is based on a description of the hydro-geomorphometry of the river network which can be easily observed for any given outlet. An inversion of this model for a gauged catchment allows the observed streamflow series being deconvoluted in order to estimate an almost scale-independent signal, namely the net rainfall \insertCite{Boudhraa2018}{transfR}. Transferring this estimate of the net rainfall series to a targeted ungauged catchment then allows simulating the streamflow there. The use of streamflow observations from several gauged catchments of the neighbourhood increases the robustness of the simulation \insertCite{deLavenne2016}{transfR}. The methodology has first been implemented on a few catchments in semiarid Tunisia at the event time scale \insertCite{Boudhraa2009}{transfR}, then in dense configurations of neighbouring and nesting catchments in France with mainly temperate oceanic climate \insertCite{deLavenne2015,deLavenne2016,deLavenne2019}{transfR} and in snow-influenced Québec, Canada \insertCite{Ecrepont2019}{transfR}. \cr\cr
 
 
 
@@ -34,7 +34,9 @@ To implement the method, it is advised to explore the following functions in thi
 
 ## --- How to get started
 
-This package comes with two datasets (\link{Blavet} and \link{Oudon}) that contains all the necessary inputs to test the package and perform discharge prediction. Users are advised to check the 'Get started with transfR' vignette (\code{vignette("V01_get_started", package = "transfR")}) that provides a complete implementation of the method with the Oudon dataset. In addition, each function comes with different examples.
+This package comes with two datasets (\link{Blavet} and \link{Oudon}) that contains all the necessary inputs to test the package and perform discharge prediction. Users are advised to check the 'Get started with transfR' vignette (\code{vignette("V01_get_started", package = "transfR")}) that provides a complete implementation of the method with the Oudon dataset. Two additional vignettes are proposed to help the preparation of input data: a spatiotemporal array of observed discharge (\code{vignette("V02_inputs_preparation_stars", package = "transfR")}) and a morphometric description of the catchments (\code{vignette("V03_inputs_preparation_whitebox", package = "transfR")}). In addition, each function comes with different examples.
+
+A detailed description of the modelling approach and the package has been published by de Lavenne et al. (2023): the theoretical aspects of each modelling step are described in more detail, arguments justifying the default values used in the functions are presented, and limitations of the approach are discussed for a consistent implementation of the approach.
 
 For the French region of Brittany, a \href{https://geosas.fr/simfen/}{web service} using this package was developed to facilitate the implementation of the method without the need for the user to have programming skills in R or to collect the necessary input data \insertCite{Dallery2020}{transfR}.
 
@@ -54,6 +56,8 @@ For the French region of Brittany, a \href{https://geosas.fr/simfen/}{web servic
 \insertRef{deLavenne2016}{transfR}
 
 \insertRef{deLavenne2019}{transfR}
+
+\insertRef{deLavenne2023}{transfR}
 }
 
 \concept{model}
