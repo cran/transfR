@@ -3,7 +3,7 @@
 
 ## Overview
 
-This R package aims to propose a geomorphology-based hydrological modelling to transfer streamflow measurements from gauged catchments to ungauged catchments (where there is no stations monitoring the streamflow). It follows a runoff-runoff approach, i.e. it directly combines the observed streamflow series available at monitoring stations to estimate the streamflow series anywhere else in the surroundings rivers and without the need to implement a full rainfall-runoff model. 
+This R package aims to propose a geomorphology-based hydrological modelling to transfer streamflow measurements from gauged catchments to ungauged catchments, i.e. where there is no station monitoring the streamflow. It follows a runoff-runoff approach, i.e. it directly combines the observed streamflow series available at monitoring stations to estimate the streamflow series anywhere else in the surroundings rivers and without the need to implement a full rainfall-runoff model. The package itself and theoretical aspects of the approach are presented in detail and discussed by de Lavenne et al. (2023). 
 
 ## Short description of the modelling approach
 
@@ -30,7 +30,9 @@ To implement the method, it is advised to explore the following functions in thi
 
 ## How to get started
 
-This package comes with two datasets (Blavet and Oudon) that contains all the necessary inputs to test the package and perform discharge prediction. Users are advised to check the 'Get started with transfR' vignette (`vignette("V01_get_started", package = "transfR")`) that provides a complete implementation of the method with the Oudon dataset. In addition, each function comes with different examples.
+This package comes with two datasets (Blavet and Oudon) that contains all the necessary inputs to test the package and perform discharge prediction. Users are advised to check the 'Get started with transfR' vignette (`vignette("V01_get_started", package = "transfR")`) that provides a complete implementation of the method with the Oudon dataset. Two additional vignettes are proposed to help the preparation of input data: a spatiotemporal array of observed discharge (`vignette("V02_inputs_preparation_stars", package = "transfR")`) and a morphometric description of the catchments (`vignette("V03_inputs_preparation_whitebox", package = "transfR")`). In addition, each function comes with different examples.
+
+A detailed description of the modelling approach and the package has been published by de Lavenne et al. (2023): the theoretical aspects of each modelling step are described in more detail, arguments justifying the default values used in the functions are presented, and limitations of the approach are discussed for a consistent implementation of the approach.
 
 For the French region of Brittany, a [web service (SIMFEN)](https://geosas.fr/simfen/) using this package was developed to facilitate the implementation of the method without the need for the user to have programming skills in R or to collect the necessary input data (Dallery et al. 2020).
 
@@ -48,5 +50,7 @@ de Lavenne A, Boudhraâ H, Cudennec C (2015). “Streamflow prediction in ungaug
 
 de Lavenne A, Skøien JO, Cudennec C, Curie F, Moatar F (2016). “Transferring measured discharge time series: Large-scale comparison of Top-kriging to geomorphology-based inverse modeling.” Water Resources Research, 52(7), 5555–5576. doi: [10.1002/2016WR018716](https://doi.org/10.1002/2016WR018716).
 
-de Lavenne A, Cudennec C (2019). “Assessment of freshwater discharge into a coastal bay through multi-basin ensemble hydrological modelling.” Science of The Total Environment, 669, 812 - 820. ISSN 0048-9697, doi: [10.1016/j.scitotenv.2019.02.387](https://doi.org/10.1016/j.scitotenv.2019.02.387).
+de Lavenne A, Cudennec C (2019). “Assessment of freshwater discharge into a coastal bay through multi-basin ensemble hydrological modelling.” Science of The Total Environment, 669, 812 - 820. doi: [10.1016/j.scitotenv.2019.02.387](https://doi.org/10.1016/j.scitotenv.2019.02.387).
+
+de Lavenne A, Loree T, Squividant H, Cudennec C (2023). “The transfR toolbox for transferring observed streamflow series to ungauged basins based on their hydrogeomorphology.” Environmental Modelling & Software, 159, 105562. doi: [10.1016/j.envsoft.2022.105562](https://doi.org/10.1016/j.envsoft.2022.105562).
 

@@ -33,19 +33,6 @@ dem_100m[dem_100m < 0] <- NA
 # Write to file
 write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
-# Download a French Topage river network within the bbox using the "Sandre - Eau France" WFS
-download.file(url = paste0("https://services.sandre.eaufrance.fr/geo/topage2019",
-                     "?request=GetFeature&service=WFS&version=2.0.0",
-                     "&typeName=CoursEau_FXX_Topage2019",
-                     "&outputFormat=application/json;%20subtype=geojson&BBOX=",
-                     paste0(blavet_bbox[c("ymin","xmin","ymax","xmax")], 
-                            collapse=",")), 
-              destfile = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"))
-CoursEau_Topage2019 <- st_read(dsn = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"), 
-                               drivers = "GeoJSON", stringsAsFactors = FALSE, quiet = FALSE,
-                               query = "SELECT gid FROM CoursEau_FXX_Topage2019")
-
 ## ---- echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'-----
 # If WhiteboxTools executable are not present, install it in the temporary directory
 library(whitebox)
@@ -59,7 +46,12 @@ if(!wbt_init()){
 }
 
 ## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+library(transfR)
 library(whitebox)
+
+# Get the French Topage river network from the Blavet dataset
+data(Blavet)
+CoursEau_Topage2019 <- Blavet$network
 
 # Change projection and write files
 network_topage <- st_transform(CoursEau_Topage2019, EPSG)
@@ -112,9 +104,6 @@ whitebox::wbt_remove_short_streams(d8_pntr = "d8.tif",
                                    wd = wbt_wd)
 
 ## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
-library(transfR)
-data(Blavet)
-
 # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 outlets_coordinates <- data.frame(id = names(Blavet$hl),
                              X = c(254010.612,255940-100,255903,237201,273672,265550),

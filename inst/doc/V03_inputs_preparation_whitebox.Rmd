@@ -69,25 +69,7 @@ write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
 
 ## 2. Retrieve a known river network and burn it into DEM (optional)
 
-The hydrological modelling distinguish the hillslope from the river network. Both will have very different transfer dynamics, and the `transfR` package aims to describe the transfer function of the river network only. Defining where this river network begins and the flow path it takes is a key, and non-trivial, issue for hydrogeomorphologists. The easiest way to draw a drainage network from a DEM is usually to define a minimum drainage area threshold at which the drainage network is assumed to start. However, defining this threshold can be difficult as it may vary spatially, especially with the geology of the region. It may therefore be better to use a known river network and force the flow paths to follow it. Here we will use the [French TOPAGE river network](https://bdtopage.eaufrance.fr/) as a reference and use a stream burning technique into the DEM following @Lindsay2016a.
-
-A vector layer of our reference river network is first downloaded from a Web Feature Service (WFS).
-
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-# Download a French Topage river network within the bbox using the "Sandre - Eau France" WFS
-download.file(url = paste0("https://services.sandre.eaufrance.fr/geo/topage2019",
-                     "?request=GetFeature&service=WFS&version=2.0.0",
-                     "&typeName=CoursEau_FXX_Topage2019",
-                     "&outputFormat=application/json;%20subtype=geojson&BBOX=",
-                     paste0(blavet_bbox[c("ymin","xmin","ymax","xmax")], 
-                            collapse=",")), 
-              destfile = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"))
-CoursEau_Topage2019 <- st_read(dsn = file.path(wbt_wd,"CoursEau_FXX_Topage2019.geojson"), 
-                               drivers = "GeoJSON", stringsAsFactors = FALSE, quiet = FALSE,
-                               query = "SELECT gid FROM CoursEau_FXX_Topage2019")
-```
-
-After a reprojection and rasterization of this river network, the function [`whitebox::wbt_burn_streams_at_roads()`](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#BurnStreamsAtRoads) is used to burn it into the DEM.
+The hydrological modelling distinguish the hillslope from the river network. Both will have very different transfer dynamics, and the `transfR` package aims to describe the transfer function of the river network only. Defining where this river network begins and the flow path it takes is a key, and non-trivial, issue for hydrogeomorphologists. The easiest way to draw a drainage network from a DEM is usually to define a minimum drainage area threshold at which the drainage network is assumed to start. However, defining this threshold can be difficult as it may vary spatially, especially with the geology of the region. It may therefore be better to use a known river network and force the flow paths to follow it. Here we will use the [French TOPAGE river network](https://bdtopage.eaufrance.fr/) as a reference (see the description of the `Blavet` dataset to download it from the Web Feature Service (WFS) "Sandre - Eau France"). We will implement a stream burning technique into the DEM using the function [`whitebox::wbt_burn_streams_at_roads()`](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#BurnStreamsAtRoads) and following @Lindsay2016a.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'}
 # If WhiteboxTools executable are not present, install it in the temporary directory
@@ -103,7 +85,12 @@ if(!wbt_init()){
 ```
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+library(transfR)
 library(whitebox)
+
+# Get the French Topage river network from the Blavet dataset
+data(Blavet)
+CoursEau_Topage2019 <- Blavet$network
 
 # Change projection and write files
 network_topage <- st_transform(CoursEau_Topage2019, EPSG)
@@ -172,9 +159,6 @@ whitebox::wbt_remove_short_streams(d8_pntr = "d8.tif",
 Coordinates of the outlets are retrieved from [hydro.eaufrance.fr](https://www.hydro.eaufrance.fr/) and snapped to the pixel of the river network that is consistent with the previously defined flow directions.
 
 ```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
-library(transfR)
-data(Blavet)
-
 # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 outlets_coordinates <- data.frame(id = names(Blavet$hl),
                              X = c(254010.612,255940-100,255903,237201,273672,265550),
