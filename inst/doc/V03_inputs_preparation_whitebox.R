@@ -8,7 +8,7 @@ knitr::opts_chunk$set(
 ## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
 wbt_wd <- tempdir(check = TRUE)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'------
 library(elevatr)
 library(rgdal) # Still often needed by elevatr
 library(progress) # Still often needed by elevatr
@@ -20,32 +20,70 @@ EPSG <- 2154
 blavet_bbox <- st_bbox(c(xmin = -3.3, xmax = -2.7, ymax = 48.11, ymin = 47.77), 
                            crs = st_crs(4326))
 
-# Retrieve elevation data as raster
-dem_raw <- elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10) # ~76m resolution
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'-----
+#  # Retrieve elevation data as raster
+#  dem_raw <- elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10) # ~76m resolution
+#  
+#  # Project and define spatial resolution:
+#  dem_100m  <- st_warp(st_as_stars(dem_raw), cellsize = 100, crs = st_crs(EPSG))
+#  names(dem_100m) <- "warp"
+#  
+#  # Set negative values (ocean) to NA
+#  dem_100m[dem_100m < 0] <- NA
+#  
+#  # Write to file
+#  write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
 
-# Project and define spatial resolution: 
-dem_100m  <- st_warp(st_as_stars(dem_raw), cellsize = 100, crs = st_crs(EPSG))
-names(dem_100m) <- "warp"
+## ---- echo=FALSE, message=FALSE, warning=TRUE, eval=TRUE, results='hide'------
+# Similar to previous chunk but handles unavailable internet resources
+dem_raw <- try(elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10), silent = TRUE)
+if(!inherits(dem_raw, "try-error")){
+  dem_100m  <- st_warp(st_as_stars(dem_raw), cellsize = 100, crs = st_crs(EPSG))
+  names(dem_100m) <- "warp"
+  dem_100m[dem_100m < 0] <- NA
+  write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
+  running <- TRUE
+}else{
+  warning("\nIssue when running elevatr::get_elev_raster(). \nThe vignette will not be fully built.")
+  running <- FALSE
+}
 
-# Set negative values (ocean) to NA
-dem_100m[dem_100m < 0] <- NA
-
-# Write to file
-write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
-
-## ---- echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'-----
+## ---- echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
 # If WhiteboxTools executable are not present, install it in the temporary directory
 library(whitebox)
 if(!wbt_init()){
-  install_whitebox(pkg_dir = wbt_wd)
-  exe_path <- file.path(wbt_wd, "WBT", "whitebox_tools") # Unix
-  if(!file.exists(exe_path)) exe_path <- paste0(exe_path,".exe") # Windows
-  if(!file.exists(exe_path)) stop("WhiteboxTools executable not found")
-  wbt_options(exe_path = exe_path,
-              wd = wbt_wd)
+  wbt_inst <- try(install_whitebox(pkg_dir = wbt_wd), silent = TRUE)
+  if(!inherits(wbt_inst, "try-error")){
+    exe_path <- file.path(wbt_wd, "WBT", "whitebox_tools") # Unix
+    if(!file.exists(exe_path)) exe_path <- paste0(exe_path,".exe") # Windows
+    if(!file.exists(exe_path)){
+      warning("WhiteboxTools executable not found")
+      running <- FALSE
+    }else{
+        wbt_options(exe_path = exe_path,
+                max_procs = 2,
+                wd = wbt_wd,
+                verbose = TRUE)
+      }
+    }else{running <- FALSE}
+  }else{
+    wbt_options(max_procs = 2,
+                wd = wbt_wd,
+                verbose = TRUE)
+  }
+# Try WhiteboxTools to detect any issue
+if(running){
+  wbt_test <- try(whitebox::wbt_fill_depressions(dem = "dem_100m.tif",
+                               output = "dem_fill.tif",
+                               wd = wbt_wd), silent = TRUE)
+  if(inherits(wbt_test, "try-error")){
+    warning("WhiteboxTools could not pass the test of the wbt_fill_depressions() function.")
+    running <- FALSE
+  }
 }
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 library(transfR)
 library(whitebox)
 
@@ -74,7 +112,7 @@ whitebox::wbt_burn_streams_at_roads(dem = "dem_100m.tif",
                         output = "dem_100m_burn.tif", 
                         wd = wbt_wd)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 # Remove the depressions on the DEM
 whitebox::wbt_fill_depressions(dem = "dem_100m_burn.tif",
                                output = "dem_fill.tif",
@@ -103,7 +141,7 @@ whitebox::wbt_remove_short_streams(d8_pntr = "d8.tif",
                                    min_length= 200,
                                    wd = wbt_wd)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 outlets_coordinates <- data.frame(id = names(Blavet$hl),
                              X = c(254010.612,255940-100,255903,237201,273672,265550),
@@ -136,7 +174,7 @@ for(id in outlets_snapped$id){
   catchments <- rbind(catchments, st_sf(data.frame(id, geom = st_geometry(contours))))
 }
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE---------------------------------
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running-------------------
 # Compare drainage areas to the dataset provided with transfR
 compare_areas <- data.frame(
   name = names(Blavet$hl),
@@ -146,7 +184,7 @@ compare_areas <- data.frame(
 
 print(compare_areas)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide', fig.width=7, fig.height=4----
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4----
 # Plot catchment delineation
 par(oma = c(0, 0, 0, 6))
 plot(catchments[,"id"], main = "Catchments delineation", key.pos = 4, reset = FALSE)
@@ -154,7 +192,7 @@ plot(st_geometry(st_intersection(network_topage,catchments)),
      col = "white", lwd = 1.5, add = TRUE)
 plot(outlets_snapped, col = "black", pch = 16, add = TRUE)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 # Compute hydraulic length
 whitebox::wbt_downslope_flowpath_length(d8_pntr = "d8.tif",
                                         output = "fpl.tif",
@@ -178,20 +216,20 @@ for(id in catchments$id){
 }
 
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide', fig.width=7, fig.height=4----
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4----
 i <- 1
 network <- st_geometry(st_intersection(network_topage,catchments[i,]))
 plot(hl[[i]], main = paste("Hydraulic length of catchment", i,"[m]"), 
      col = hcl.colors(20, palette = "Teal"), key.pos = 1, reset = FALSE)
 plot(network, col = "white", lwd = 1.5, add = TRUE)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 obs_st <- st_as_stars(list(Qobs = Blavet$obs$Qobs), 
                             dimensions = st_dimensions(
                               time = st_get_dimension_values(Blavet$obs,1),
                               space = st_geometry(catchments)))
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 obs <- as_transfr(st = obs_st, hl = hl)
 
 ## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE---------------------

@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-The hydrological modelling of the `transfR` package is based on a geomorphological analysis of the studied catchments. In this vignette, we give some guidance on how to perform this geomorphological analysis. More specifically, we extract the catchment delineation and hydraulic length maps from a digital elevation model (DEM). This analysis is one of the two inputs needed (together with the time series of flow observations) to build a `transfR` object and start using the `transfR` package (see the [Get started with transfR](https://cran.r-project.org/package=transfR/vignettes/V01_get_started.html) vignette). 
+The hydrological modelling of the `transfR` package is based on a geomorphological analysis of the studied catchments. In this vignette, we give some guidance on how to perform this geomorphological analysis. More specifically, we extract the catchment delineation and hydraulic length maps from a digital elevation model (DEM). This analysis is one of the two inputs needed (together with the time series of flow observations) to build a `transfR` object and start using the `transfR` package (see the *Get started with transfR* vignette). 
 
 Hydraulic length is defined as the distance within the river network along an identified flow path to the outlet. It can be extracted from a DEM in many different ways, such as with the GRASS toolkits [@Jasiewicz2011], Whitebox GAT (see @Lindsay2016 or [WhiteboxTools](https://github.com/jblindsay/whitebox-tools)), TauDEM (D. Tarboton, Utah State University) or online services (@Squividant2015 for catchment delineation only). This vignette presents one possible workflow by making use of two main R packages: 
 
@@ -40,8 +40,7 @@ The `elevatr` package allows retrieving grids (rasters) of elevation data worldw
 
 It is necessary to assign a geographic projection for the catchment delineation and hydraulic length maps with the `whitebox` package. We chose to use the Lambert93 projection, the official projection for maps of metropolitan France, for which the [EPSG code is 2154](https://epsg.io/2154).
 
-
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'}
 library(elevatr)
 library(rgdal) # Still often needed by elevatr
 library(progress) # Still often needed by elevatr
@@ -52,7 +51,10 @@ EPSG <- 2154
 # Define a bbox that will encompass the catchments of the study area
 blavet_bbox <- st_bbox(c(xmin = -3.3, xmax = -2.7, ymax = 48.11, ymin = 47.77), 
                            crs = st_crs(4326))
+```
 
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'}
 # Retrieve elevation data as raster
 dem_raw <- elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10) # ~76m resolution
 
@@ -67,24 +69,63 @@ dem_100m[dem_100m < 0] <- NA
 write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
 ```
 
+
+```{r, echo=FALSE, message=FALSE, warning=TRUE, eval=TRUE, results='hide'}
+# Similar to previous chunk but handles unavailable internet resources
+dem_raw <- try(elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10), silent = TRUE)
+if(!inherits(dem_raw, "try-error")){
+  dem_100m  <- st_warp(st_as_stars(dem_raw), cellsize = 100, crs = st_crs(EPSG))
+  names(dem_100m) <- "warp"
+  dem_100m[dem_100m < 0] <- NA
+  write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
+  running <- TRUE
+}else{
+  warning("\nIssue when running elevatr::get_elev_raster(). \nThe vignette will not be fully built.")
+  running <- FALSE
+}
+```
+
 ## 2. Retrieve a known river network and burn it into DEM (optional)
 
 The hydrological modelling distinguish the hillslope from the river network. Both will have very different transfer dynamics, and the `transfR` package aims to describe the transfer function of the river network only. Defining where this river network begins and the flow path it takes is a key, and non-trivial, issue for hydrogeomorphologists. The easiest way to draw a drainage network from a DEM is usually to define a minimum drainage area threshold at which the drainage network is assumed to start. However, defining this threshold can be difficult as it may vary spatially, especially with the geology of the region. It may therefore be better to use a known river network and force the flow paths to follow it. Here we will use the [French TOPAGE river network](https://bdtopage.eaufrance.fr/) as a reference (see the description of the `Blavet` dataset to download it from the Web Feature Service (WFS) "Sandre - Eau France"). We will implement a stream burning technique into the DEM using the function [`whitebox::wbt_burn_streams_at_roads()`](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#BurnStreamsAtRoads) and following @Lindsay2016a.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'}
+```{r, echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'}
 # If WhiteboxTools executable are not present, install it in the temporary directory
 library(whitebox)
 if(!wbt_init()){
-  install_whitebox(pkg_dir = wbt_wd)
-  exe_path <- file.path(wbt_wd, "WBT", "whitebox_tools") # Unix
-  if(!file.exists(exe_path)) exe_path <- paste0(exe_path,".exe") # Windows
-  if(!file.exists(exe_path)) stop("WhiteboxTools executable not found")
-  wbt_options(exe_path = exe_path,
-              wd = wbt_wd)
+  wbt_inst <- try(install_whitebox(pkg_dir = wbt_wd), silent = TRUE)
+  if(!inherits(wbt_inst, "try-error")){
+    exe_path <- file.path(wbt_wd, "WBT", "whitebox_tools") # Unix
+    if(!file.exists(exe_path)) exe_path <- paste0(exe_path,".exe") # Windows
+    if(!file.exists(exe_path)){
+      warning("WhiteboxTools executable not found")
+      running <- FALSE
+    }else{
+        wbt_options(exe_path = exe_path,
+                max_procs = 2,
+                wd = wbt_wd,
+                verbose = TRUE)
+      }
+    }else{running <- FALSE}
+  }else{
+    wbt_options(max_procs = 2,
+                wd = wbt_wd,
+                verbose = TRUE)
+  }
+# Try WhiteboxTools to detect any issue
+if(running){
+  wbt_test <- try(whitebox::wbt_fill_depressions(dem = "dem_100m.tif",
+                               output = "dem_fill.tif",
+                               wd = wbt_wd), silent = TRUE)
+  if(inherits(wbt_test, "try-error")){
+    warning("WhiteboxTools could not pass the test of the wbt_fill_depressions() function.")
+    running <- FALSE
+  }
 }
+
 ```
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'}
 library(transfR)
 library(whitebox)
 
@@ -126,7 +167,7 @@ The `whitebox` package provides all the tools to perform a usual catchment delin
 * [Delimit the catchments](https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#Watershed).
 
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'}
 # Remove the depressions on the DEM
 whitebox::wbt_fill_depressions(dem = "dem_100m_burn.tif",
                                output = "dem_fill.tif",
@@ -158,7 +199,7 @@ whitebox::wbt_remove_short_streams(d8_pntr = "d8.tif",
 
 Coordinates of the outlets are retrieved from [hydro.eaufrance.fr](https://www.hydro.eaufrance.fr/) and snapped to the pixel of the river network that is consistent with the previously defined flow directions.
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'}
 # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 outlets_coordinates <- data.frame(id = names(Blavet$hl),
                              X = c(254010.612,255940-100,255903,237201,273672,265550),
@@ -194,7 +235,7 @@ for(id in outlets_snapped$id){
 
 Resulting catchments delineation can be plotted and checked.
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running}
 # Compare drainage areas to the dataset provided with transfR
 compare_areas <- data.frame(
   name = names(Blavet$hl),
@@ -205,7 +246,7 @@ compare_areas <- data.frame(
 print(compare_areas)
 ```
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide', fig.width=7, fig.height=4}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4}
 # Plot catchment delineation
 par(oma = c(0, 0, 0, 6))
 plot(catchments[,"id"], main = "Catchments delineation", key.pos = 4, reset = FALSE)
@@ -222,7 +263,7 @@ The `whitebox` package does not provide a function to compute hydraulic length d
 Flow path lengths are computed once for all the study area. For each catchment, this raster is then trimmed (i.e. removing NA values outside the bounding box of the catchment) and the values of flow path lengths are corrected such as the minimum flow path length is equal to half a pixel width/height. The hydraulic lengths are finally gathered in a list as expected by the `as_transfr()` function.
 
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'}
 # Compute hydraulic length
 whitebox::wbt_downslope_flowpath_length(d8_pntr = "d8.tif",
                                         output = "fpl.tif",
@@ -249,7 +290,7 @@ for(id in catchments$id){
 
 Resulting maps of hydraulic length can be plotted and checked.
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide', fig.width=7, fig.height=4}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4}
 i <- 1
 network <- st_geometry(st_intersection(network_topage,catchments[i,]))
 plot(hl[[i]], main = paste("Hydraulic length of catchment", i,"[m]"), 
@@ -260,9 +301,9 @@ plot(network, col = "white", lwd = 1.5, add = TRUE)
 
 ## 5. Creating a transfR object and running a simulation
 
-Catchment delineations can be used as the spatial dimension of `stars` objects to georeference the observed flow time series of gauged catchments and locate ungauged catchments (see vignette [Preparation of input data: creation of a stars object](https://cran.r-project.org/package=transfR/vignettes/V02_inputs_preparation_stars.html) for details). Here we will create a `stars` object using the observed discharge of the `Blavet` dataset and the delineations that we just computed with `whitebox`.
+Catchment delineations can be used as the spatial dimension of `stars` objects to georeference the observed flow time series of gauged catchments and locate ungauged catchments (see vignette *Preparation of input data: creation of a stars object* for details). Here we will create a `stars` object using the observed discharge of the `Blavet` dataset and the delineations that we just computed with `whitebox`.
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'}
 obs_st <- st_as_stars(list(Qobs = Blavet$obs$Qobs), 
                             dimensions = st_dimensions(
                               time = st_get_dimension_values(Blavet$obs,1),
@@ -271,7 +312,7 @@ obs_st <- st_as_stars(list(Qobs = Blavet$obs$Qobs),
 
 The maps of hydraulic length can finally be used to create an object of class `transfR` by using the function `as_transfr()` (argument `hl`) and perform simulations.
 
-```{r, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+```{r, echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'}
 obs <- as_transfr(st = obs_st, hl = hl)
 ```
 

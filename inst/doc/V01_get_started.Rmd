@@ -19,14 +19,14 @@ knitr::opts_chunk$set(
 )
 ```
 
-This package aims to estimatettt discharge time series of ungauged catchments (non-instrumented catchment where discharge is therefore not available) using hydrological observation of neighbouring gauged catchments (instrumented catchment where discharge is available). The hydrological modelling is based on a description of catchment geomorphology that can be assessed at any location. An inversion of this model at gauged locations allows estimating the net rainfall that makes the transfer of observed discharge easier to ungauged locations. 
+This package aims to estimate discharge time series of ungauged catchments (non-instrumented catchment where discharge is therefore not available) using hydrological observation of neighbouring gauged catchments (instrumented catchment where discharge is available). The hydrological modelling is based on a description of catchment geomorphology that can be assessed at any location. An inversion of this model at gauged locations allows estimating the net rainfall that makes the transfer of observed discharge easier to ungauged locations. 
 
 ## 1. Create a transfR object
 
 An object of class transfR needs to be created first with the function `as_transfr()`. It will also be used to gather all the catchment attributes and intermediary results from the different steps. This object needs to be created from two users inputs:
 
-* a spatio-temporal object (stars object) that is describing both discharge and the corresponding spatial support (outlet, centroid or catchment boundary); see vignette [Preparation of input data: creation of a stars object](https://cran.r-project.org/package=transfR/vignettes/V02_inputs_preparation_stars.html). 
-* raster maps of hydraulic length (stars or matrix object) for each catchment describing the flow path length from each pixel to the outlet within the river network [@Cudennec2004; @Aouissi2013]; see vignette [Preparation of input data: geomorphological analysis with whitebox](https://cran.r-project.org/package=transfR/vignettes/V03_inputs_preparation_whitebox.html).
+* a spatio-temporal object (stars object) that is describing both discharge and the corresponding spatial support (outlet, centroid or catchment boundary); see vignette *Preparation of input data: creation of a stars object*. 
+* raster maps of hydraulic length (stars or matrix object) for each catchment describing the flow path length from each pixel to the outlet within the river network [@Cudennec2004; @Aouissi2013]; see vignette *Preparation of input data: geomorphological analysis with whitebox*.
 
 This package does not provide functions to create these two inputs. It needs to be prepared beforehand by the user. Several GIS softwares offer possibilities to extract them from a digital elevation model such as GRASS toolkits [@Jasiewicz2011], Whitebox GAT (see @Lindsay2016 or [WhiteboxTools](https://github.com/jblindsay/whitebox-tools)), TauDEM (D. Tarboton, Utah State University) or online services (@Squividant2015 for catchment delineation only). The vignettes mentioned above give some guidance on the preparation of input data.
 

@@ -55,17 +55,33 @@ hdist.sfc <- function(x, y, method="rghosh", gres=5, ditself=FALSE, maxsample=2.
   if(method=="ghosh"){
     if(!(all(st_geometry_type(x) == c("POLYGON")) & all(st_geometry_type(y) == c("POLYGON")))) stop("Geometry type has to be a POLYGON if method 'rghosh' is used.")
     if(verbose) cat("Sampling the catchments at a resolution of about",gres,"pts/km2\n")
-    size <- round(units::set_units(gres,"1/km^2")*units::set_units(st_area(st_union(c(x,y))),"km^2"))
-    xydisc <- st_sample(st_union(c(x,y)),size=units::drop_units(size),type="regular")
-    xdisc <- list()
-    ydisc <- list()
-    for(i in 1:length(x)) xdisc[[i]] <- xydisc[x[i]]
-    for(i in 1:length(y)) ydisc[[i]] <- xydisc[y[i]]
+    if(parallel){
+      if(missing(cores)|is.null(cores)) cores=parallel::detectCores()
+      cl <- parallel::makeCluster(cores)
+      doParallel::registerDoParallel(cl=cl)
+      on.exit(parallel::stopCluster(cl))
+    }
+    xy_union <- st_union(c(x,y))
+    size <- round(units::set_units(gres,"1/km^2")*units::set_units(st_area(xy_union),"km^2"))
+    xydisc <- st_sample(xy_union, size=units::drop_units(size), type="regular")
+    if(parallel){
+      xdisc <- foreach::"%dopar%"(foreach::foreach(i=1:length(x),.packages="sf"), xydisc[x[i]])
+    }else{
+      xdisc <- list()
+      for(i in 1:length(x)) xdisc[[i]] <- xydisc[x[i]]
+    }
     if(identical(x,y)){
+      ydisc <- xdisc
       for(i in 1:length(xdisc)) if(length(xdisc[[i]])>maxsample){
         xdisc[[i]] <- ydisc[[i]] <- xdisc[[i]][sort(sample.int(length(xdisc[[i]]), size = maxsample, replace = FALSE))]
         if(verbose) cat("Random resampling of catchment",i,"with a maximum size sample of",maxsample,"points.\n")}
     }else{
+      if(parallel){
+        ydisc <- foreach::"%dopar%"(foreach::foreach(i=1:length(y),.packages="sf"), xydisc[y[i]])
+      }else{
+        ydisc <- list()
+        for(i in 1:length(y)) ydisc[[i]] <- xydisc[y[i]]
+      }
       for(i in 1:length(xdisc)){
         if(length(xdisc[[i]])>maxsample){
           xdisc[[i]] <- xdisc[[i]][sort(sample.int(length(xdisc[[i]]), size = maxsample, replace = FALSE))]
@@ -79,10 +95,6 @@ hdist.sfc <- function(x, y, method="rghosh", gres=5, ditself=FALSE, maxsample=2.
     }
     if(verbose) cat("Computing Ghosh distance between catchments\n")
     if(parallel){
-      if(missing(cores)|is.null(cores)) cores=parallel::detectCores()
-      cl <- parallel::makeCluster(cores)
-      doParallel::registerDoParallel(cl=cl)
-      on.exit(parallel::stopCluster(cl))
       if(!identical(x,y)){
         res <- foreach::"%dopar%"(foreach::foreach(i=1:length(x),.packages="sf"),
                                   sapply(ydisc,FUN=function(x){.Fortran("gdist",coord1=st_coordinates(x),coord2=st_coordinates(xdisc[[i]]),n1=length(x),n2=length(xdisc[[i]]),proj=proj,rescale=FALSE,diag=FALSE,mdist=0)$mdist}))
