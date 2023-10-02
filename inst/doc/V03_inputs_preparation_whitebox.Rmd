@@ -42,8 +42,7 @@ It is necessary to assign a geographic projection for the catchment delineation 
 
 ```{r, download_dem, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'}
 library(elevatr)
-library(rgdal) # Still often needed by elevatr
-library(progress) # Still often needed by elevatr
+library(progress) # Needed by elevatr
 
 # Set up a projection (French Lambert-93 projection)
 EPSG <- 2154 
@@ -51,9 +50,10 @@ EPSG <- 2154
 # Define a bbox that will encompass the catchments of the study area
 blavet_bbox <- st_bbox(c(xmin = -3.3, xmax = -2.7, ymax = 48.11, ymin = 47.77), 
                            crs = st_crs(4326))
+blavet_loc <- st_as_sfc(blavet_bbox) |> st_sf()
 
 # Retrieve elevation data as raster
-dem_raw <- elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10) # ~76m resolution
+dem_raw <- elevatr::get_elev_raster(blavet_loc, z = 10) # ~76m resolution
 
 # Project and define spatial resolution: 
 dem_100m  <- st_warp(st_as_stars(dem_raw), cellsize = 100, crs = st_crs(EPSG))

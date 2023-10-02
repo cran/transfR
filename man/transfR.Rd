@@ -1,5 +1,6 @@
-\name{transfR}
+\name{transfR-package}
 \alias{transfR}
+\alias{transfR-package}
 \docType{package}
 \encoding{UTF-8}
 \title{\packageTitle{transfR}}

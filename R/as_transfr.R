@@ -60,7 +60,7 @@ as_transfr <- function(object, st, uc, lagtime, surface, delineation, outlet, ce
     if(!inherits(st, "stars")) stop("The class of 'st' must be stars.")
     if(!all(st_geometry_type(st) == c("POLYGON"))) stop("st geometry type has to be a POLYGON.")
     #--Checking attributes
-    if(length(names(st))>0&!any(names(st)%in%c("Qobs","RnInv"))) stop("No column name is recognized in 'st'. Fill in 'Qobs' or 'RnInv' time series.")
+    if(length(names(st))>0&!any(names(st)%in%c("Qobs","RnInv","RnSim"))) stop("No column name is recognized in 'st'. Fill in 'Qobs', 'RnInv' or 'RnSim' time series.")
     # if("Qobs"%in%names(st)) st[[which(names(st)=="Qobs")]] <- units::set_units(st[[which(names(st)=="Qobs")]],"m^3/s")
 
     #--Deducing time step

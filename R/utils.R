@@ -19,11 +19,11 @@ solve.units <- function(a, ...){
 }
 
 #' @method %*% transfR
-'%*%' <- function(x,...) UseMethod('%*%',x)
+'%*%' <- function(e1, e2, ...) UseMethod('%*%')
 
 '%*%.default' <- .Primitive('%*%')
 
-'%*%.units' <-  function(e1, e2){
+'%*%.units' <-  function(e1, e2, ...){
   x1 <- drop_units(e1)
   x2 <- drop_units(e2)
   y <- x1 %*% x2

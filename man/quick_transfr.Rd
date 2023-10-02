@@ -95,7 +95,7 @@ Wrap up all the modelling steps into one function for a quick implementation of 
 \details{
 The function applies sequentially the following functions: \link{velocity}, \link{uh},
 \link{lagtime}, \link{rapriori}, \link{inversion}, \link{hdist}, \link{mixr} and \link{convolution}.
-Please refer to the help of each of these functions and to \link{transfR} for a general description of the
+Please refer to the help of each of these functions and to \link{transfR-package} for a general description of the
 modelling approach.
 }
 \examples{

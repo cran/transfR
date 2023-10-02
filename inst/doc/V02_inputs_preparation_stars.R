@@ -1,10 +1,10 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-## ---- echo=TRUE, message=FALSE, results='hide', eval=TRUE---------------------
+## ----echo=TRUE, message=FALSE, results='hide', eval=TRUE----------------------
 library(transfR)
 data(Oudon)
 
@@ -22,20 +22,20 @@ write.table(data.frame(DateTime = format(st_get_dimension_values(Oudon$obs,1),
             file = file.path(wd, "discharge.txt"), 
             col.names = TRUE, row.names = FALSE, sep = ";", quote = FALSE)
 
-## ---- echo=TRUE, message=FALSE, results='hide', eval=TRUE---------------------
+## ----echo=TRUE, message=FALSE, results='hide', eval=TRUE----------------------
 library(sf)
 catchments <- st_read(file.path(wd, "catchments.shp"), "catchments", stringsAsFactors = FALSE)
 obs_sf <- catchments[1:5,] # Gauged catchments
 sim_sf <- catchments[6,]   # Ungauged catchments
 
-## ---- echo=TRUE, message=FALSE, results='hide', eval=TRUE---------------------
+## ----echo=TRUE, message=FALSE, results='hide', eval=TRUE----------------------
 library(units)
 Q <- read.table(file.path(wd, "discharge.txt"), header = TRUE, sep = ";", 
                 colClasses = c("character", rep("numeric", 6)))
 Qmatrix  <- as.matrix(Q[,-1])
 Qmatrix  <- set_units(Qmatrix, "m^3/s")
 
-## ---- echo=TRUE, message=FALSE, results='hide', eval=TRUE---------------------
+## ----echo=TRUE, message=FALSE, results='hide', eval=TRUE----------------------
 library(stars)
 Qmatrix  <- Qmatrix[,obs_sf$ID] #to have the same order as in the spacial data layer
 obs_st   <- st_as_stars(list(Qobs = Qmatrix), 
@@ -44,17 +44,17 @@ obs_st   <- st_as_stars(list(Qobs = Qmatrix),
 sim_st   <- st_as_stars(dimensions = st_dimensions(time = as.POSIXct(Q$DateTime, tz="UTC"), 
                                                        space = sim_sf$geometry))
 
-## ---- echo=TRUE, message=FALSE, results='hide', eval=TRUE---------------------
+## ----echo=TRUE, message=FALSE, results='hide', eval=TRUE----------------------
 obs <- as_transfr(st = obs_st, hl = Oudon$hl[1:5])
 sim <- as_transfr(st = sim_st, hl = Oudon$hl[6])
 
-## ---- echo=TRUE, message=FALSE, results='hide', eval=TRUE---------------------
+## ----echo=TRUE, message=FALSE, results='hide', eval=TRUE----------------------
 sim <- quick_transfr(obs, sim, parallel = TRUE, cores = 2)
 
-## ---- echo=TRUE, message=TRUE, eval=TRUE--------------------------------------
+## ----echo=TRUE, message=TRUE, eval=TRUE---------------------------------------
 sim$st
 
-## ---- echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'-----
+## ----echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'------
 # Cleaning temporary directory
 unlink(wd, recursive = TRUE)
 

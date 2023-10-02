@@ -5,13 +5,12 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, results='hide'-----------------
+## ----echo=TRUE, message=FALSE, warning=FALSE, results='hide'------------------
 wbt_wd <- tempdir(check = TRUE)
 
-## ---- download_dem, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
+## ----download_dem, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
 #  library(elevatr)
-#  library(rgdal) # Still often needed by elevatr
-#  library(progress) # Still often needed by elevatr
+#  library(progress) # Needed by elevatr
 #  
 #  # Set up a projection (French Lambert-93 projection)
 #  EPSG <- 2154
@@ -19,9 +18,10 @@ wbt_wd <- tempdir(check = TRUE)
 #  # Define a bbox that will encompass the catchments of the study area
 #  blavet_bbox <- st_bbox(c(xmin = -3.3, xmax = -2.7, ymax = 48.11, ymin = 47.77),
 #                             crs = st_crs(4326))
+#  blavet_loc <- st_as_sfc(blavet_bbox) |> st_sf()
 #  
 #  # Retrieve elevation data as raster
-#  dem_raw <- elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10) # ~76m resolution
+#  dem_raw <- elevatr::get_elev_raster(blavet_loc, z = 10) # ~76m resolution
 #  
 #  # Project and define spatial resolution:
 #  dem_100m  <- st_warp(st_as_stars(dem_raw), cellsize = 100, crs = st_crs(EPSG))
@@ -33,11 +33,10 @@ wbt_wd <- tempdir(check = TRUE)
 #  # Write to file
 #  write_stars(dem_100m["warp"], file.path(wbt_wd,"dem_100m.tif"))
 
-## ---- echo=FALSE, message=FALSE, warning=TRUE, eval=TRUE, results='hide'------
+## ----echo=FALSE, message=FALSE, warning=TRUE, eval=TRUE, results='hide'-------
 try_chunk <- try({
 library(elevatr)
-library(rgdal) # Still often needed by elevatr
-library(progress) # Still often needed by elevatr
+library(progress) # Needed by elevatr
 
 # Set up a projection (French Lambert-93 projection)
 EPSG <- 2154 
@@ -45,9 +44,10 @@ EPSG <- 2154
 # Define a bbox that will encompass the catchments of the study area
 blavet_bbox <- st_bbox(c(xmin = -3.3, xmax = -2.7, ymax = 48.11, ymin = 47.77), 
                            crs = st_crs(4326))
+blavet_loc <- st_as_sfc(blavet_bbox) |> st_sf()
 
 # Retrieve elevation data as raster
-dem_raw <- elevatr::get_elev_raster(st_as_sfc(blavet_bbox), z = 10) # ~76m resolution
+dem_raw <- elevatr::get_elev_raster(blavet_loc, z = 10) # ~76m resolution
 
 # Project and define spatial resolution: 
 dem_100m  <- st_warp(st_as_stars(dem_raw), cellsize = 100, crs = st_crs(EPSG))
@@ -66,7 +66,7 @@ if(inherits(try_chunk, "try-error")){
   running <- TRUE
 }
 
-## ---- install_whitebox, echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
+## ----install_whitebox, echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
 # If WhiteboxTools executable are not present, install it in the temporary directory
 library(whitebox)
 if(!wbt_init()){
@@ -90,7 +90,7 @@ if(!wbt_init()){
                 verbose = TRUE)
   }
 
-## ---- burn_stream, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
+## ----burn_stream, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
 #  library(transfR)
 #  library(whitebox)
 #  
@@ -119,7 +119,7 @@ if(!wbt_init()){
 #                          output = "dem_100m_burn.tif",
 #                          wd = wbt_wd)
 
-## ---- echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
+## ----echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
 try_chunk <- try({
 library(transfR)
 library(whitebox)
@@ -154,7 +154,7 @@ if(inherits(try_chunk, "try-error")){
   running <- FALSE
 }
 
-## ---- extract_stream, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
+## ----extract_stream, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
 #  # Remove the depressions on the DEM
 #  whitebox::wbt_fill_depressions(dem = "dem_100m_burn.tif",
 #                                 output = "dem_fill.tif",
@@ -183,7 +183,7 @@ if(inherits(try_chunk, "try-error")){
 #                                     min_length= 200,
 #                                     wd = wbt_wd)
 
-## ---- echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
+## ----echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
 try_chunk <- try({
 # Remove the depressions on the DEM
 whitebox::wbt_fill_depressions(dem = "dem_100m_burn.tif",
@@ -218,7 +218,7 @@ if(inherits(try_chunk, "try-error")){
   running <- FALSE
 }
 
-## ---- delineate_catchments, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
+## ----delineate_catchments, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
 #  # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 #  outlets_coordinates <- data.frame(id = names(Blavet$hl),
 #                               X = c(254010.612,255940-100,255903,237201,273672,265550),
@@ -251,7 +251,7 @@ if(inherits(try_chunk, "try-error")){
 #    catchments <- rbind(catchments, st_sf(data.frame(id, geom = contours)))
 #  }
 
-## ---- echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
+## ----echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
 try_chunk <- try({
 # Localize the outlets of the studied catchments (with manual adjustments to help snapping)
 outlets_coordinates <- data.frame(id = names(Blavet$hl),
@@ -290,7 +290,7 @@ if(inherits(try_chunk, "try-error")){
   running <- FALSE
 }
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running-------------------
+## ----echo=TRUE, message=FALSE, warning=FALSE, eval=running--------------------
 # Compare drainage areas to the dataset provided with transfR
 compare_areas <- data.frame(
   name = names(Blavet$hl),
@@ -300,7 +300,7 @@ compare_areas <- data.frame(
 
 print(compare_areas)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4----
+## ----echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4----
 # Plot catchment delineation
 par(oma = c(0, 0, 0, 6))
 plot(catchments[,"id"], main = "Catchments delineation", key.pos = 4, reset = FALSE)
@@ -308,7 +308,7 @@ plot(st_geometry(st_intersection(network_topage,catchments)),
      col = "white", lwd = 1.5, add = TRUE)
 plot(outlets_snapped, col = "black", pch = 16, add = TRUE)
 
-## ---- hydraulic_length, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
+## ----hydraulic_length, echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE, results='hide'----
 #  # Compute hydraulic length
 #  whitebox::wbt_downslope_flowpath_length(d8_pntr = "d8.tif",
 #                                          output = "fpl.tif",
@@ -332,7 +332,7 @@ plot(outlets_snapped, col = "black", pch = 16, add = TRUE)
 #  }
 #  
 
-## ---- echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
+## ----echo=FALSE, message=FALSE, warning=TRUE, eval=running, results='hide'----
 try_chunk <- try({
 # Compute hydraulic length
 whitebox::wbt_downslope_flowpath_length(d8_pntr = "d8.tif",
@@ -362,29 +362,29 @@ if(inherits(try_chunk, "try-error")){
   running <- FALSE
 }
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4----
+## ----echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide', fig.width=7, fig.height=4----
 i <- 1
 network <- st_geometry(st_intersection(network_topage,catchments[i,]))
 plot(hl[[i]], main = paste("Hydraulic length of catchment", i,"[m]"), 
      col = hcl.colors(20, palette = "Teal"), key.pos = 1, reset = FALSE)
 plot(network, col = "white", lwd = 1.5, add = TRUE)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
+## ----echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 obs_st <- st_as_stars(list(Qobs = Blavet$obs$Qobs), 
                             dimensions = st_dimensions(
                               time = st_get_dimension_values(Blavet$obs,1),
                               space = st_geometry(catchments)))
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
+## ----echo=TRUE, message=FALSE, warning=FALSE, eval=running, results='hide'----
 obs <- as_transfr(st = obs_st, hl = hl)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE---------------------
+## ----echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE----------------------
 #  obs <- quick_transfr(obs, velocity = "brittany2013", parallel = TRUE, cores = 2, cv = TRUE)
 
-## ---- echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE---------------------
+## ----echo=TRUE, message=FALSE, warning=FALSE, eval=FALSE----------------------
 #  obs$st
 
-## ---- echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'-----
+## ----echo=FALSE, message=FALSE, warning=FALSE, eval=TRUE, results='hide'------
 # Cleaning temporary directory
 unlink(wbt_wd, recursive = TRUE)
 
