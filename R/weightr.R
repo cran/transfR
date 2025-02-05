@@ -4,7 +4,9 @@
 #' of the average net rainfall of an ungauged catchment
 #' @name weightr
 #' @param Rn net rainfall matrix of donor catchments (rows for time index, and columns for donors index)
-#' @param distances vector of the distances to each donor catchment (see \link{hdist})
+#' @param distances vector of the distances to each donor catchment, used for donor selection (see \link{hdist})
+#' @param similarities vector of the hydrological similarities to each donor catchment, used for donor weighting
+#'  (\code{1/distances^power} is used if not provided)
 #' @param ndonors maximum number of donor catchments to use
 #' @param donors vector of catchments id from which donors are selected. If empty, the \code{ndonors} closest
 #' catchments are used
@@ -33,42 +35,41 @@
 #' @references
 #' \insertRef{deLavenne2016}{transfR}
 #' @export
-weightr <- function(Rn, distances, ndonors = 5, donors, power = 1, flexible_donor = TRUE){
+weightr <- function(Rn, distances, similarities, ndonors = 5, donors = NULL, power = 1, flexible_donor = TRUE){
+
   if(inherits(distances, "units")) distances <- units::drop_units(distances)
-  weights <- matrix(0,nrow=nrow(Rn),ncol=ncol(Rn))
-  if(flexible_donor){ #Choose the best ndonor donors within available data at each time step.
-    for(t in 1:nrow(Rn)){
-      gaps    <- is.na(Rn[t,])
-      if(all(gaps)){weights[t,]=NA}else{
-        if(missing(donors)){tdonors  <- which(!gaps)}else{tdonors  <- donors[donors%in%which(!gaps)]}
-        tdonors  <- tdonors[order(distances[tdonors])[1:min(c(length(tdonors),ndonors))]]
-        if(any(distances[tdonors]==0)){
-          weights[t,tdonors] <- 0
-          weights[t,tdonors[which(distances[tdonors]==0)]] <- 1/sum(distances[tdonors]==0)
-        }else{
-          weights[t,tdonors]=1/distances[tdonors]^power
-          weights[t,tdonors]=weights[t,tdonors]/sum(weights[t,tdonors])
-        }
-      }
-    }
-  }else{ #Keep always the same donors all along the time series. The number of donors might be reduced according to the available data.
+  if(missing(similarities)) similarities <- 1/distances^power
+
+  if(!flexible_donor){
     norn    <- apply(Rn,MARGIN=2,FUN=function(x){all(is.na(x))})
     stable_donors  <- which(!norn)
-    if(missing(donors)){stable_donors  <- which(!norn)}else{stable_donors  <- donors[donors%in%which(!norn)]}
+    if(is.null(donors)){stable_donors  <- which(!norn)}else{stable_donors  <- donors[donors%in%which(!norn)]}
     stable_donors  <- stable_donors[order(distances[stable_donors])[1:min(c(length(stable_donors),ndonors))]]
-    for(t in 1:nrow(Rn)){
-      gaps    <- is.na(Rn[t,stable_donors])
-      tdonors  <- stable_donors[!gaps]
-      if(all(gaps)){weights[t,]=NA}else{
-        if(any(distances[tdonors]==0)){
-          weights[t,tdonors] <- 0
-          weights[t,tdonors[which(distances[tdonors]==0)]] <- 1/sum(distances[tdonors]==0)
-        }else{
-          weights[t,tdonors]=1/distances[tdonors]^power
-          weights[t,tdonors]=weights[t,tdonors]/sum(weights[t,tdonors])
-        }
-      }
-    }
+    if(length(stable_donors)==0){stop("Could not find gauged donors")}else{donors <- stable_donors}
   }
+  weights <- t(apply(Rn, MARGIN=1, FUN=function(x) time_weight(tRn=x, distances=distances, similarities=similarities, ndonors=ndonors,
+                                                                 donors=donors, flexible_donor=flexible_donor)))
   return(weights)
+}
+
+time_weight <- function(tRn, distances, similarities, ndonors, donors, flexible_donor){
+  tweights <- rep(0, length(tRn))
+  if(flexible_donor){
+    gaps    <- is.na(tRn)
+    if(missing(donors)|is.null(donors)){tdonors  <- which(!gaps)}else{tdonors  <- donors[donors%in%which(!gaps)]}
+  }else{
+    gaps    <- is.na(tRn[donors])
+    tdonors  <- donors[!gaps]
+    }
+  if(length(tdonors)==0|any(is.na(tdonors))){tweights[] <- NA}else{
+    tdonors  <- tdonors[order(distances[tdonors])[1:min(c(length(tdonors),ndonors))]]
+    if(any(distances[tdonors]==0)){
+      tweights[tdonors] <- 0
+      tweights[tdonors[which(distances[tdonors]==0)]] <- 1/sum(distances[tdonors]==0)
+    }else{
+      tweights[tdonors] <- similarities[tdonors]+abs(min(similarities[tdonors]))
+      tweights[tdonors] <- tweights[tdonors]/sum(tweights[tdonors])
+  }
+  }
+  return(tweights)
 }

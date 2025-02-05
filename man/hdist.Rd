@@ -51,10 +51,14 @@ It will add one row and one column in the distance matrix. Only used if method i
 \item{proj}{logical indicating if spatial layer are using a projection. If TRUE, euclidean
 distance is used. If FALSE, the great-circle distance is used}
 
-\item{parallel}{logical indicating if the computation should be parallelised}
+\item{parallel}{logical indicating whether the computation should be parallelised. Could be a vector
+of length two to distinguish between parallelisation of sampling and Ghosh distance
+(because sampling over large areas can be memory intensive)}
 
 \item{cores}{the number of cores to use for parallel execution if \code{parallel} is TRUE.
-If not specified, the number of cores is set to the value of \code{parallel::detectCores()}}
+If not specified, the number of cores is set to the value of \code{parallel::detectCores()}.
+Similarly to \code{parallel}, it could be a vector of length two to distinguish between
+parallelisation of sampling and Ghosh distance}
 
 \item{verbose}{boolean indicating if information messages should be written to the console}
 
@@ -72,12 +76,13 @@ Calculate distances between two sets of catchments using their spatial support.
 \details{
 The \code{method} "ghosh" refers to a simplification of the distance defined
 by \insertCite{Ghosh1951;textual}{transfR} as proposed by \insertCite{Gottschalk1993,Gottschalk2011;textual}{transfR}.
-The rescaled Ghosh distance (\code{method} "rghosh") is calculted following \insertCite{deLavenne2016;textual}{transfR}.
+The rescaled Ghosh distance (\code{method} "rghosh") is calculated following \insertCite{deLavenne2016;textual}{transfR}.
 }
 \examples{
 data(Oudon)
 catchments <- st_geometry(Oudon$obs)
-hdist(x = catchments[1:2], y = catchments[3:5], gres = 5, method = "rghosh")
+hdist(x = catchments[1:2], y = catchments[3:5], gres = 5, method = "rghosh",
+parallel=c(FALSE, TRUE), cores=2)
 }
 \references{
 \insertRef{Ghosh1951}{transfR}

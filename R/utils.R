@@ -11,6 +11,8 @@ uh2mat <- function(uh,nrow,ncol){
   return(mat)
 }
 
+#' @method solve units
+#' @noRd
 solve.units <- function(a, ...){
   x <- drop_units(a)
   y <- solve(x)
@@ -19,10 +21,15 @@ solve.units <- function(a, ...){
 }
 
 #' @method %*% transfR
+#' @noRd
 '%*%' <- function(e1, e2, ...) UseMethod('%*%')
 
+#' @method %*% default
+#' @noRd
 '%*%.default' <- .Primitive('%*%')
 
+#' @method %*% units
+#' @noRd
 '%*%.units' <-  function(e1, e2, ...){
   x1 <- drop_units(e1)
   x2 <- drop_units(e2)

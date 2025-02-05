@@ -4,12 +4,23 @@
 \alias{weightr}
 \title{Weights of donor catchments}
 \usage{
-weightr(Rn, distances, ndonors = 5, donors, power = 1, flexible_donor = TRUE)
+weightr(
+  Rn,
+  distances,
+  similarities,
+  ndonors = 5,
+  donors = NULL,
+  power = 1,
+  flexible_donor = TRUE
+)
 }
 \arguments{
 \item{Rn}{net rainfall matrix of donor catchments (rows for time index, and columns for donors index)}
 
-\item{distances}{vector of the distances to each donor catchment (see \link{hdist})}
+\item{distances}{vector of the distances to each donor catchment, used for donor selection (see \link{hdist})}
+
+\item{similarities}{vector of the hydrological similarities to each donor catchment, used for donor weighting
+(\code{1/distances^power} is used if not provided)}
 
 \item{ndonors}{maximum number of donor catchments to use}
 

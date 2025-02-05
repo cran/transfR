@@ -1,13 +1,16 @@
 !For compiling the Fortran file :
 !R CMD SHLIB gdist.f90
 
-recursive subroutine gdist(coord1,coord2,n1,n2,proj,rescale,diag,mdist)
+recursive subroutine gdist(coord1,coord2,n1,n2,proj,rescale,diag,nthreads,mdist)
+    use omp_lib
+
     implicit none
 
     integer, intent(in) :: n1, n2
     double precision, intent(in)  :: coord1(n1,2)
     double precision, intent(in)  :: coord2(n2,2)
     logical, intent(in)  :: proj, rescale, diag
+    integer, intent(inout) :: nthreads
     double precision, intent(out) :: mdist
 
 
@@ -31,7 +34,8 @@ recursive subroutine gdist(coord1,coord2,n1,n2,proj,rescale,diag,mdist)
     mdist = 0.
     if(proj) then !euclidian distance
         if(diag) then
-             do i=1,n1
+            !$omp parallel do num_threads(nthreads) private(i, j, diffx, diffy, dist, sdist) reduction(+:mdist)
+            do i=1,n1
                 sdist = 0.
                 do j=i,n2
                     diffx = coord1(i,1)-coord2(j,1)
@@ -42,7 +46,9 @@ recursive subroutine gdist(coord1,coord2,n1,n2,proj,rescale,diag,mdist)
                 end do
                 mdist = mdist+sdist/ndist
             end do
+            !$omp end parallel do
         else
+            !$omp parallel do num_threads(nthreads) private(i, j, diffx, diffy, dist, sdist) reduction(+:mdist)
             do i=1,n1
                 sdist = 0.
                 do j=1,n2
@@ -54,9 +60,11 @@ recursive subroutine gdist(coord1,coord2,n1,n2,proj,rescale,diag,mdist)
                 end do
                 mdist = mdist+sdist/ndist
             end do
+            !$omp end parallel do
         end if
     else !great-circle distance
         if(diag) then
+            !$omp parallel do num_threads(nthreads) private(i, j, diffx, diffy, dist, sdist) reduction(+:mdist)
             do i=1,n1
                 sdist = 0.
                 do j=i,n2
@@ -70,7 +78,9 @@ recursive subroutine gdist(coord1,coord2,n1,n2,proj,rescale,diag,mdist)
                 end do
                 mdist = mdist+sdist/ndist
             end do
+            !$omp end parallel do
         else
+            !$omp parallel do num_threads(nthreads) private(i, j, diffx, diffy, dist, sdist) reduction(+:mdist)
             do i=1,n1
                 sdist = 0.
                 do j=1,n2
@@ -84,12 +94,13 @@ recursive subroutine gdist(coord1,coord2,n1,n2,proj,rescale,diag,mdist)
                 end do
                 mdist = mdist+sdist/ndist
            end do
+           !$omp end parallel do
         end if
     end if
 
     if(rescale) then
-        call gdist(coord1,coord1,n1,n1,proj,.FALSE.,.TRUE.,mdist1)
-        call gdist(coord2,coord2,n2,n2,proj,.FALSE.,.TRUE.,mdist2)
+        call gdist(coord1,coord1,n1,n1,proj,.FALSE.,.TRUE.,nthreads,mdist1)
+        call gdist(coord2,coord2,n2,n2,proj,.FALSE.,.TRUE.,nthreads,mdist2)
 !        write(*,'(2I6,3F20.1)') n1, n2, mdist, mdist1, mdist2
         mdist = mdist - 0.5*(mdist1+mdist2)
     end if

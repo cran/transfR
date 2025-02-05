@@ -64,7 +64,7 @@ as_transfr <- function(object, st, uc, lagtime, surface, delineation, outlet, ce
     # if("Qobs"%in%names(st)) st[[which(names(st)=="Qobs")]] <- units::set_units(st[[which(names(st)=="Qobs")]],"m^3/s")
 
     #--Deducing time step
-    deltat <- unique(difftime(st_get_dimension_values(st,1)[-1], st_get_dimension_values(st,1)[-dim(st)[1]], units = "mins"))
+    deltat <- unique(as.numeric(difftime(st_get_dimension_values(st,1)[-1], st_get_dimension_values(st,1)[-dim(st)[1]], units = "mins")))
     if(length(deltat)==1){
       deltat <- units::set_units(deltat, "min")
       object$deltat <- deltat

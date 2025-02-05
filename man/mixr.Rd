@@ -12,6 +12,7 @@ mixr(
   gres = 5,
   weightO = 0.8,
   weightC = 0.2,
+  similarity,
   parallel = FALSE,
   cores = NULL,
   power = 1,
@@ -21,7 +22,8 @@ mixr(
   flexible_donor = TRUE,
   cv = FALSE,
   save_donor = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -29,8 +31,8 @@ mixr(
 
 \item{sim}{"transfR" object of the ungauged catchments}
 
-\item{mdist}{the distance matrix between gauged and ungauged catchments as computed by
-the function \link{hdist}}
+\item{mdist}{the distance matrix between gauged and ungauged catchments, as computed by
+the function \link{hdist}, used for donor selection}
 
 \item{distance}{the method to use for computing distance matrix if \code{mdist} is not provided.
 Possible values are "ghosh", "rghosh", "points", "centroids", "combined" as available
@@ -45,6 +47,9 @@ distance (see the function \link{hdist})}
 \item{weightC}{weight given to the distance between centroids if \code{distance} is "combined"
 (see the function \link{hdist})}
 
+\item{similarity}{a hydrological similarity matrix between gauged and ungauged catchments
+used for donor weighting (\code{1/mdist^power} is used if not provided)}
+
 \item{parallel}{logical indicating if the computation should be parallelised}
 
 \item{cores}{the number of cores to use for parallel execution if \code{parallel} is TRUE.
@@ -56,11 +61,11 @@ If not specified, the number of cores is set to the value of \code{parallel::det
 \item{ndonors}{maximum number of catchments to be used to simulate discharge of an ungauged
 catchment as defined by the function \link{weightr}}
 
-\item{donors}{vector of catchments id from which donors are selected. If empty, the \code{ndonors} closest
-catchments are used}
+\item{donors}{list of vectors indicating the catchment IDs from which donors are selected for each ungauged catchments.
+If empty, the \code{ndonors} closest catchments are used}
 
 \item{maxdist}{maximum distance between a gauged and an ungauged catchment to allow the net rainfall
-to be transfered. This threshold is applied on the \code{mdist} distance matrix. If no units is provided,
+to be transferred. This threshold is applied on the \code{mdist} distance matrix. If no units is provided,
 \code{maxdist} is assumed to be in [m].}
 
 \item{flexible_donor}{boolean indicating if the donor catchments can change during the simulation period
@@ -75,6 +80,8 @@ in the \code{sim} object called "RnDonor", "Idonor" and "Wdonor" describing the 
 the weight of the donor catchments respectively}
 
 \item{verbose}{boolean indicating if information messages should be written to the console}
+
+\item{...}{other arguments to be passed to \link{rsimilarity} if \code{similarity} is a list of matrices}
 }
 \value{
 The \code{sim} object incremented by the new computed attributes.
