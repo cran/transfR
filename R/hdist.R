@@ -104,12 +104,13 @@ hdist.sfc <- function(x, y, method="rghosh", gres=5, ditself=FALSE, maxsample=2.
     gdist <- loop_gdist(xdisc=xdisc, ydisc=ydisc, proj=proj, intersect=FALSE, parallel=parallel[2], cores=cores[2])
     if(ditself){
       if(verbose) cat("Computing Ghosh distance within catchments\n")
+      na_val <- set_units(NA, units(gdist), mode="standard")
       if(!identical(x,y)){
         gdist <- cbind(gdist,sapply(xdisc,FUN=function(x){call_gdist(pts1=x, pts2=x, proj=proj, intersect=FALSE, rescale=FALSE, diag=TRUE, parallel=parallel[2], cores=cores[2])}))
-        gdist <- rbind(gdist,c(sapply(ydisc,FUN=function(x){call_gdist(pts1=x, pts2=x, proj=proj, intersect=FALSE, rescale=FALSE, diag=TRUE, parallel=parallel[2], cores=cores[2])}),NA))
+        gdist <- rbind(gdist,c(sapply(ydisc,FUN=function(x){call_gdist(pts1=x, pts2=x, proj=proj, intersect=FALSE, rescale=FALSE, diag=TRUE, parallel=parallel[2], cores=cores[2])}),na_val))
       }else{
         gdist <- cbind(gdist,diag(gdist))
-        gdist <- rbind(gdist,c(diag(gdist),NA))
+        gdist <- rbind(gdist,c(diag(gdist),na_val))
       }
     units(gdist) <- units(st_distance(xdisc[[1]][1],ydisc[[1]][1])) #units are lost by some operations
     }
@@ -202,8 +203,8 @@ call_gdist <- function(pts1, pts2, proj, intersect, rescale, diag, parallel, cor
     }
   }else{
     # Compute the Ghosh distance matrix between all points
-    .Fortran("gdist", coord1=st_coordinates(pts1), coord2=st_coordinates(pts2), n1=length(pts1), n2=length(pts2),
-             proj=proj, rescale=rescale, diag=diag, nthreads=as.integer(cores), mdist=0)$mdist
+    .Call("c_gdist", coord1=st_coordinates(pts1), coord2=st_coordinates(pts2),
+             proj=proj, rescale=rescale, diag=diag, nthreads=as.integer(cores))
   }
 }
 

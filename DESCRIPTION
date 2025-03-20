@@ -1,8 +1,8 @@
 Package: transfR
 Type: Package
 Title: Transfer of Hydrograph from Gauged to Ungauged Catchments
-Version: 1.1.0
-Date: 2025-02-05
+Version: 1.1.4
+Date: 2025-03-20
 Authors@R: c(
   person("Alban", "de Lavenne", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-9448-3490"), email = "alban.delavenne@inrae.fr"),
   person("Christophe", "Cudennec", role = c("ths"), comment = c(ORCID = "0000-0002-1707-8926"), email = "christophe.cudennec@agrocampus-ouest.fr"),
@@ -32,6 +32,6 @@ Author: Alban de Lavenne [aut, cre] (<https://orcid.org/0000-0002-9448-3490>),
   Hervé Squividant [ctb]
 Maintainer: Alban de Lavenne <alban.delavenne@inrae.fr>
 RoxygenNote: 7.3.2
-Packaged: 2025-02-05 14:48:09 UTC; delavenne
+Packaged: 2025-03-20 12:21:56 UTC; delavenne
 Repository: CRAN
-Date/Publication: 2025-02-05 15:20:02 UTC
+Date/Publication: 2025-03-20 13:10:02 UTC

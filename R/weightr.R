@@ -53,23 +53,26 @@ weightr <- function(Rn, distances, similarities, ndonors = 5, donors = NULL, pow
 }
 
 time_weight <- function(tRn, distances, similarities, ndonors, donors, flexible_donor){
-  tweights <- rep(0, length(tRn))
-  if(flexible_donor){
-    gaps    <- is.na(tRn)
-    if(missing(donors)|is.null(donors)){tdonors  <- which(!gaps)}else{tdonors  <- donors[donors%in%which(!gaps)]}
-  }else{
-    gaps    <- is.na(tRn[donors])
-    tdonors  <- donors[!gaps]
-    }
-  if(length(tdonors)==0|any(is.na(tdonors))){tweights[] <- NA}else{
-    tdonors  <- tdonors[order(distances[tdonors])[1:min(c(length(tdonors),ndonors))]]
-    if(any(distances[tdonors]==0)){
-      tweights[tdonors] <- 0
-      tweights[tdonors[which(distances[tdonors]==0)]] <- 1/sum(distances[tdonors]==0)
-    }else{
-      tweights[tdonors] <- similarities[tdonors]+abs(min(similarities[tdonors]))
-      tweights[tdonors] <- tweights[tdonors]/sum(tweights[tdonors])
-  }
-  }
-  return(tweights)
+	tweights <- rep(0, length(tRn))
+	if(flexible_donor){
+		gaps    <- is.na(tRn)
+		if(missing(donors)|is.null(donors)){tdonors  <- which(!gaps)}else{tdonors  <- donors[donors%in%which(!gaps)]}
+	}else{
+		gaps    <- is.na(tRn[donors])
+		tdonors  <- donors[!gaps]
+	}
+	if(length(tdonors)==0|any(is.na(tdonors))){tweights[] <- NA}else{
+		tdonors  <- tdonors[order(distances[tdonors])[1:min(c(length(tdonors),ndonors))]]
+		if(any(distances[tdonors]==0)){
+			tweights[tdonors] <- 0
+			tweights[tdonors[which(distances[tdonors]==0)]] <- 1/sum(distances[tdonors]==0)
+		}else if (any(is.infinite(similarities[tdonors]))) {
+			tweights[tdonors] <- 0
+			tweights[tdonors[which(is.infinite(similarities[tdonors]))]] <- 1/sum(is.infinite(similarities[tdonors]))
+		}else{
+			tweights[tdonors] <- similarities[tdonors]+abs(min(similarities[tdonors]))
+			tweights[tdonors] <- tweights[tdonors]/sum(tweights[tdonors])
+		}
+	}
+	return(tweights)
 }

@@ -31,8 +31,7 @@ convolution = function(Rn, ...) UseMethod("convolution")
 #' @export
 convolution.default <- function(Rn, uh, continuous=FALSE, ...){
   Q <- rep(0,length(Rn)+length(uh))
-  for(t in which(Rn>0)) Q[t:(t+length(uh)-1)] <- Rn[t]*uh + Q[t:(t+length(uh)-1)]
-  for(t in which(is.na(Rn))) Q[t:(t+length(uh)-1)] <- NA
+  Q <- .Call("c_convolution", rn=Rn, uh=uh)
   if(continuous){
     Q[1:(length(uh)-1)] <- NA
     return(Q[1:length(Rn)])

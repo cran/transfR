@@ -2,54 +2,28 @@
 % Please edit documentation in R/rsimilarity.R
 \name{rsimilarity}
 \alias{rsimilarity}
-\title{Prediction of hydrological similarity to drive transfer of hydrograph to ungauged catchments}
+\title{Similarity of net rainfall time series}
 \usage{
-rsimilarity(
-  Rn,
-  predictors,
-  newpredictors,
-  FUN = invRMSE,
-  power = 0.5,
-  symmetrize = mean,
-  model = "glmnet",
-  args_glmnet = list(alpha = 0.5, s = "lambda.min", lower.limits = 0),
-  verbose = TRUE,
-  seed = NULL
-)
+rsimilarity(Rn, FUN = "invKGE", parallel = FALSE, cores = NULL)
 }
 \arguments{
 \item{Rn}{net rainfall matrix of gauged catchments (rows for time index, and columns for catchment index)}
 
-\item{predictors}{a list of at least two squared matrices that could be used to predict similarity of net rainfall.
-The matrices should be squared to describe the similarity of each pair of gauged catchments. High values should
-indicate high probability of similarity in net rainfall}
+\item{FUN}{either a function or a character string specifying the name of a predifined function to quantify the similarity of
+two net rainfall time series. Higher values should indicate a higher probability of similarity. Predefined functions include:
+"KGE" (Kling–Gupta efficiency), "invRMSE" (inverse of root mean square error), "invKGE" (inverse of (KGE-1))
+and "RMSE" (root mean square error, should not be directly used as a similarity metric). The default is "invKGE"}
 
-\item{newpredictors}{a matrix or a data.frame of predictors, to be used as new input to the model being built,
-and from which we want to predict net rainfall similarity. Typically, a similarity between an ungauged catchment
-and several gauged catchments that we want to weight as donors. Each column should correspond to each \code{predictors},
-and each row should correspond to each pair of catchments analysed.}
+\item{parallel}{logical indicating whether the computation should be parallelised}
 
-\item{FUN}{a function that will be used to quantify the similarity of two net rainfall time series. High values should
-indicate high probability of similarity in net rainfall. Default is the inverse of root mean square error \code{invRMSE},
-but \code{KGE} (Kling–Gupta efficiency) can also be used}
-
-\item{power}{exponent applied on \code{Rn} time series when computing \code{Rn} similarity (generally between -1 and 1,
-a lower value emphasising the similarity of low flows). Default value is 0.5}
-
-\item{symmetrize}{a function to combine \code{FUN(Rn[,i],Rn[,j])} and \code{FUN(Rn[,j],Rn[,i])} into one similarity value
-(typically if \code{FUN=KGE}, \code{KGE(Rn[,i],Rn[,j])!=KGE(Rn[,j],Rn[,i])}). Default is mean}
-
-\item{model}{the method to estimate similarity of \code{Rn} from \code{descriptors}. This must be one of "lm", "glmnet"}
-
-\item{args_glmnet}{list of arguments to be passed to \code{glmnet::cv.glmnet()}}
-
-\item{verbose}{boolean indicating if warning messages should be written to the console}
-
-\item{seed}{integer value to be used by \code{set.seed()} for reproducible results. Used only if \code{model="glmnet"}}
+\item{cores}{the number of cores to use for parallel execution if \code{parallel} is TRUE.
+If not specified, the number of cores is set to the value of \code{parallel::detectCores()}}
+}
+\value{
+A square matrix of the similarity metric between each pair of catchments
 }
 \description{
-Quantify the similarity of net rainfall and model this hydrological similarity from catchment
-similarity predictors
+Calculate the similarity of net rainfall time series
 }
 \examples{
 \donttest{data(Oudon)
@@ -59,24 +33,8 @@ obs <- uh(obs)
 obs <- lagtime(obs)
 obs <- rapriori(obs)
 obs <- inversion(obs, parallel = TRUE, cores=2)
-mdist1 <- hdist(x = obs, y = obs, method = "rghosh", parallel = c(FALSE,TRUE), cores=2)
-mdist2 <- mdist1^2
-rghosh1 <- seq(1000, 5000, by=100)
-rghosh2 <- rghosh1^2
-res <- rsimilarity(Rn = obs$st$RnInv,
-                   predictors = list(rghosh1=1/mdist1, rghosh2=1/mdist2),
-                   newpredictors = data.frame(rghosh1=1/rghosh1, rghosh2=1/rghosh2),
-                   seed=1234)
-plot(rghosh1, res$similarity, ylab = "Predicted Rn similarity")
-plot(rghosh2, res$similarity, ylab = "Predicted Rn similarity")
-# rsimilarity() is automatically called by mixr() if mdist is a list
-obs <- mixr(obs = obs, mdist = mdist1,
-            similarity = list(rghosh1=1/mdist1, rghosh2=1/mdist2),
-            parallel = TRUE, cores=2, cv = TRUE, save_donor = TRUE)
-obs$similarity_models
-obs <- convolution(obs)
-plot(obs, i = 1, attribute = c("Qobs", "Qsim"))}
+msim <- rsimilarity(Rn = obs$st$RnInv, FUN="KGE", parallel = TRUE, cores=2)}
 }
 \seealso{
-\link{mixr}
+\link{rsimilarity_model}
 }

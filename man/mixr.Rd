@@ -8,20 +8,28 @@ mixr(
   obs,
   sim,
   mdist,
+  msim = NULL,
   distance = "rghosh",
   gres = 5,
   weightO = 0.8,
   weightC = 0.2,
   similarity,
+  similarity_obs,
+  mdist_obs,
+  FUN = "invKGE",
+  symmetrize = mean,
   parallel = FALSE,
   cores = NULL,
-  power = 1,
+  power = c(1, 0.5),
   ndonors = 5,
   donors = NULL,
   maxdist = 50000,
+  min_ndonors = 3,
   flexible_donor = TRUE,
+  two_steps = FALSE,
   cv = FALSE,
   save_donor = FALSE,
+  save_model = FALSE,
   verbose = TRUE,
   ...
 )
@@ -31,14 +39,20 @@ mixr(
 
 \item{sim}{"transfR" object of the ungauged catchments}
 
-\item{mdist}{the distance matrix between gauged and ungauged catchments, as computed by
+\item{mdist}{the geographical distance matrix between gauged and ungauged catchments, as computed by
 the function \link{hdist}, used for donor selection}
+
+\item{msim}{the similarity matrix of net rainfall time series for gauged catchments, as computed
+by \link{rsimilarity}. It serves as the target variable in a multivariate model that predicts this
+similarity at ungauged locations using several predictors (see the \code{similarity} argument) and
+optimizes the donors' weighting strategy. Thus, \code{msim} is required only if \code{similarity}
+and \code{similarity_obs} are lists containing several predictors}
 
 \item{distance}{the method to use for computing distance matrix if \code{mdist} is not provided.
 Possible values are "ghosh", "rghosh", "points", "centroids", "combined" as available
 in the function \link{hdist}}
 
-\item{gres}{resolution of spatial discretisation (number of points by km²) for Ghosh
+\item{gres}{resolution of spatial discretisation (number of points by km\eqn{^2}) for Ghosh
 distance (see the function \link{hdist})}
 
 \item{weightO}{weight given to the distance between outlets if \code{distance} is "combined"
@@ -48,15 +62,33 @@ distance (see the function \link{hdist})}
 (see the function \link{hdist})}
 
 \item{similarity}{a hydrological similarity matrix between gauged and ungauged catchments
-used for donor weighting (\code{1/mdist^power} is used if not provided)}
+used for donor weighting (\code{1/mdist^power[1]} is used if not provided). Gauged catchments
+should be in rows, ungauged catchments in columns. Several predictors of hydrological similarity
+can be provided in a list of matrices in order to be used by a multivariate model for predicting similarity
+between a gauged and an ungauged catchment (see \code{predictors} of the \link{rsimilarity_model} function).}
+
+\item{similarity_obs}{list of square matrices of hydrological similarity predictors between
+gauged catchments in order to train a multivariate model for predicting similarity (\code{msim}).
+Similar to \code{similarity} but between gauged catchments only. \code{similarity} will be used instead
+of \code{similarity_obs} if \code{cv} is TRUE}
+
+\item{mdist_obs}{the geographical distance matrix among gauged catchments, computed by
+the function \link{hdist}, used for training a first model of hydrological similarity}
+
+\item{FUN}{either a function or a character string specifying the name of a predifined function to quantify the similarity
+of two net rainfall time series. See \link{rsimilarity} for more details}
+
+\item{symmetrize}{a function to combine \code{FUN(Rn[,i],Rn[,j])} and \code{FUN(Rn[,j],Rn[,i])} into one similarity value
+(typically if \code{FUN=KGE}, \code{KGE(Rn[,i],Rn[,j])!=KGE(Rn[,j],Rn[,i])}). Default is mean}
 
 \item{parallel}{logical indicating if the computation should be parallelised}
 
 \item{cores}{the number of cores to use for parallel execution if \code{parallel} is TRUE.
 If not specified, the number of cores is set to the value of \code{parallel::detectCores()}}
 
-\item{power}{exponent applied in the inverse distance weighting strategy as defined by the function
-\link{weightr}}
+\item{power}{exponents. The first vector value is used in the inverse distance weighting strategy
+(as defined by the function \link{weightr}) and the second vector value is used during computation
+of Rn similarities (as defined by the function \link{rsimilarity_model})}
 
 \item{ndonors}{maximum number of catchments to be used to simulate discharge of an ungauged
 catchment as defined by the function \link{weightr}}
@@ -68,8 +100,17 @@ If empty, the \code{ndonors} closest catchments are used}
 to be transferred. This threshold is applied on the \code{mdist} distance matrix. If no units is provided,
 \code{maxdist} is assumed to be in [m].}
 
+\item{min_ndonors}{minimum number of gauged catchments to start using \link{rsimilarity_model} to build a similarity model
+of Rn time series for the weighting strategy. So this argument is only used when \code{similarity} is a list of matrices.
+It cannot be less than 3. If less than \code{min_ndonors} donors are found inverse distance weighting
+is applied using \code{mdist}}
+
 \item{flexible_donor}{boolean indicating if the donor catchments can change during the simulation period
 according to the availability of discharge observations. See \link{weightr} for more details}
+
+\item{two_steps}{boolean indicating if a first model of hydrological similarity should be built first
+on geographical distances. Residuals of this first model will be predicted from predictors provided by
+\code{similarity} and \code{similarity_obs} in a second model (see \code{first_model} of \link{rsimilarity_model})}
 
 \item{cv}{boolean indicating if cross validation evaluation should be done. If true, it will estimate
 the net rainfall of every gauged catchments (\code{obs}) as if they were ungauged (leave-one-out evaluation)}
@@ -79,9 +120,13 @@ should be stored in the sim object for further analysis. If true, it is adding t
 in the \code{sim} object called "RnDonor", "Idonor" and "Wdonor" describing the net rainfall, the id and
 the weight of the donor catchments respectively}
 
+\item{save_model}{boolean indicating whether additional results of the local similarity model should be saved.
+If true, then a list of data frames of observed and simulated similarities among gauged catchments
+neighbouring each ungauged catchment will be available in the "model_training" attribute of the output}
+
 \item{verbose}{boolean indicating if information messages should be written to the console}
 
-\item{...}{other arguments to be passed to \link{rsimilarity} if \code{similarity} is a list of matrices}
+\item{...}{other arguments to be passed to \link{rsimilarity_model} if \code{similarity} is a list of matrices}
 }
 \value{
 The \code{sim} object incremented by the new computed attributes.
@@ -98,6 +143,8 @@ The simulated net rainfall of a given ungauged catchment \eqn{i} is a weighted a
 of \code{ndonors} gauged catchments \eqn{j}:
 \deqn{R_n^i =\Sigma_{j=1}^{ndonors} R_n^j \cdot \lambda_j}
 where \eqn{\lambda_j} are defined by an inverse distance weighting function (see \link{weightr}).
+If \code{similarity} is a list of predictors of hydrological similarity, then \eqn{\lambda_j}
+are provided by \link{rsimilarity_model}.
 }
 \examples{
 \donttest{data(Oudon)
@@ -114,5 +161,5 @@ object <- convolution(object, save_donor = FALSE)
 plot(object, i = 1, attribute = c("Qobs", "Qsim"))}
 }
 \seealso{
-\link{hdist}, \link{weightr}
+\link{hdist}, \link{weightr}, \link{rsimilarity_model}, \link{rsimilarity}
 }

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alban de Lavenne" />
 
-<meta name="date" content="2025-02-05" />
+<meta name="date" content="2025-03-20" />
 
 <title>Preparation of input data: creation of a stars object</title>
 
@@ -50,8 +50,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -62,7 +63,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -364,7 +365,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Preparation of input data: creation of a
 stars object</h1>
 <h4 class="author">Alban de Lavenne</h4>
-<h4 class="date">2025-02-05</h4>
+<h4 class="date">2025-03-20</h4>
 
 
 
@@ -450,19 +451,16 @@ new attributes.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>sim<span class="sc">$</span>st</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; stars object with 2 dimensions and 2 attributes</span></span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; attribute(s):</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;                    Min.    1st Qu.     Median      Mean   3rd Qu.       Max.</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; RnSim [mm/h] 0.02794191 0.05211211 0.07829039 0.1004188 0.1212912  0.3538149</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; Qsim [m^3/s] 1.14381734 1.92053164 2.91734802 3.7084787 4.4872379 12.2575971</span></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;              NA&#39;s</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; RnSim [mm/h]  444</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; Qsim [m^3/s]  466</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; dimension(s):</span></span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt;       from   to         offset   delta                refsys point</span></span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; time     1 2185 2019-12-01 UTC 1 hours               POSIXct FALSE</span></span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; space    1    1             NA      NA RGF93 v1 / Lambert-93 FALSE</span></span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt;                               values</span></span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; time                            NULL</span></span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; space POLYGON ((404349 6766262, 4...</span></span></code></pre></div>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt;                    Min.    1st Qu.   Median      Mean   3rd Qu.       Max. NA&#39;s</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; RnSim [mm/h] 0.02794387 0.05211624 0.078292 0.1004218 0.1213064  0.3537292  444</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; Qsim [m^3/s] 1.14390189 1.92072659 2.917266 3.7085886 4.4871479 12.2553488  466</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; dimension(s):</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt;       from   to         offset   delta                refsys point</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; time     1 2185 2019-12-01 UTC 1 hours               POSIXct FALSE</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; space    1    1             NA      NA RGF93 v1 / Lambert-93 FALSE</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt;                               values</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; time                            NULL</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; space POLYGON ((404349 6766262, 4...</span></span></code></pre></div>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>
